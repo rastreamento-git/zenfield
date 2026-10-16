@@ -1,3 +1,5 @@
+> **ZenField 1.1 — branch de homologação.** Use o [guia local do ecossistema](https://github.com/rastreamento-git/zencontrol/blob/feat/ecossistema-homologacao/HOMOLOGACAO.md). Requer API ZenControl 6.4. O fluxo de primeiro acesso, notificações e financeiro exige a migração 005 do backend. Não executar deploy/migrações em produção nesta etapa.
+
 # ZenField
 
 Portal dos técnicos — versão 1.0.0. Projeto independente do repositório ZenControl, com dependências, login, sessão e publicação próprios. Não usa workspaces nem importa arquivos de outro projeto.

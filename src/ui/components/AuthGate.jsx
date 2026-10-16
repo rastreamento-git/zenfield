@@ -11,7 +11,26 @@ export default function AuthGate({ children, audience = "technician" }) {
   const [login, setLogin] = useState(technicianEntry ? "" : "admin");
   const [password, setPassword] = useState("");
   const [busy, setBusy] = useState(false);
+  const [activation, setActivation] = useState(false),
+    [code, setCode] = useState(""),
+    [newPassword, setNewPassword] = useState(""),
+    [message, setMessage] = useState("");
   function applySession(data) {
+    if (
+      data.user &&
+      technicianEntry &&
+      (!data.api_version ||
+        Number(data.api_version.split(".")[0]) < 6 ||
+        (data.api_version.startsWith("6.") &&
+          Number(data.api_version.split(".")[1]) < 4))
+    ) {
+      saveToken(null);
+      setStatus("login");
+      setError(
+        "Este ZenField requer a API ZenControl 6.4 ou superior. Peça à central a atualização do backend de homologação.",
+      );
+      return false;
+    }
     if (data.user && (data.user.papel === "tecnico") !== technicianEntry) {
       saveToken(null);
       setUser(null);
@@ -59,6 +78,20 @@ export default function AuthGate({ children, audience = "technician" }) {
     setBusy(true);
     setError("");
     try {
+      if (activation) {
+        await api.post("/auth/activate", {
+          login,
+          password,
+          code,
+          new_password: newPassword,
+        });
+        setActivation(false);
+        setPassword("");
+        setCode("");
+        setNewPassword("");
+        setMessage("Conta ativada. Entre com sua nova senha.");
+        return;
+      }
       const { data } = await api.post("/auth/login", {
         login,
         password,
@@ -141,13 +174,61 @@ export default function AuthGate({ children, audience = "technician" }) {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
+              {technicianEntry && (
+                <>
+                  <label>
+                    <input
+                      type="checkbox"
+                      checked={activation}
+                      onChange={(e) => {
+                        setActivation(e.target.checked);
+                        setError("");
+                        setMessage("");
+                      }}
+                    />{" "}
+                    Primeiro acesso ou redefinição
+                  </label>
+                  {activation && (
+                    <>
+                      <label htmlFor="activation-code">
+                        Código individual fornecido pela central
+                      </label>
+                      <input
+                        id="activation-code"
+                        autoComplete="one-time-code"
+                        value={code}
+                        onChange={(e) => setCode(e.target.value)}
+                        required
+                      />
+                      <label htmlFor="new-password">
+                        Nova senha (mínimo 12 caracteres)
+                      </label>
+                      <input
+                        id="new-password"
+                        type="password"
+                        autoComplete="new-password"
+                        minLength={12}
+                        maxLength={128}
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        required
+                      />
+                      <p>
+                        Use zen123 como senha provisória e o código individual.
+                        O código expira em 24 horas.
+                      </p>
+                    </>
+                  )}
+                </>
+              )}
+              {message && <p role="status">{message}</p>}
               {error && (
                 <p role="alert" className="text-red-700">
                   {error}
                 </p>
               )}
               <button disabled={busy} className="primary-button">
-                {busy ? "Entrando…" : "Entrar"}
+                {busy ? "Aguarde…" : activation ? "Ativar conta" : "Entrar"}
               </button>
             </form>
           )}

@@ -1,3 +1,4 @@
+import { NoticeBell, Home, Stock, FinancePanel, Rates } from "./Ecosystem";
 import { useEffect, useRef, useState } from "react";
 import {
   Activity,
@@ -13,6 +14,8 @@ import {
   Trash2,
   Package,
   KeyRound,
+  Wallet,
+  CircleDollarSign,
 } from "lucide-react";
 import { api, errorMessage, saveToken } from "@zenfield/ui/lib/api";
 import { useSession } from "@zenfield/ui/lib/session";
@@ -109,6 +112,14 @@ function Service({ id, onBack, onChanged }) {
     [error, setError] = useState(""),
     [busy, setBusy] = useState(false),
     [notes, setNotes] = useState(""),
+    [executedOn, setExecutedOn] = useState(
+      new Intl.DateTimeFormat("en-CA", {
+        timeZone: "America/Sao_Paulo",
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+      }).format(new Date()),
+    ),
     [confirmed, setConfirmed] = useState(false),
     [signed, setSigned] = useState(false),
     [uploadStatus, setUploadStatus] = useState(""),
@@ -125,6 +136,16 @@ function Service({ id, onBack, onChanged }) {
     if (active?.id !== loadedBatch.current) {
       loadedBatch.current = active?.id;
       setNotes(active?.notes || "");
+      setExecutedOn(
+        active?.executed_on ||
+          next.order.executed_on ||
+          new Intl.DateTimeFormat("en-CA", {
+            timeZone: "America/Sao_Paulo",
+            year: "numeric",
+            month: "2-digit",
+            day: "2-digit",
+          }).format(new Date()),
+      );
       setConfirmed(false);
       setSigned(active?.checklist_signed || false);
     }
@@ -557,6 +578,19 @@ function Service({ id, onBack, onChanged }) {
               </div>
             </div>
             <label className="zc-field zc-full">
+              Data efetiva da execução
+              <input
+                type="date"
+                required
+                value={executedOn}
+                onChange={(e) => {
+                  setExecutedOn(e.target.value);
+                  setConfirmed(false);
+                }}
+                disabled={busy || stale}
+              />
+            </label>
+            <label className="zc-field zc-full">
               Observações do atendimento (opcional)
               <textarea
                 rows={3}
@@ -596,6 +630,20 @@ function Service({ id, onBack, onChanged }) {
             </label>
             <div className="portal-submit-actions">
               <button
+                className="secondary-button"
+                disabled={busy || stale || !!missing.length}
+                onClick={() =>
+                  act(() =>
+                    api.post("/technician/orders/" + order.id + "/finish", {
+                      version: order.version,
+                      executed_on: executedOn,
+                    }),
+                  )
+                }
+              >
+                Registrar execução finalizada
+              </button>
+              <button
                 className="primary-button"
                 disabled={busy || stale || !!missing.length || !confirmed}
                 onClick={() =>
@@ -606,6 +654,7 @@ function Service({ id, onBack, onChanged }) {
                         version: batch.version,
                         serials: install ? codes : [],
                         checklist_signed: signed,
+                        executed_on: executedOn,
                         notes,
                         confirmed,
                       },
@@ -629,6 +678,7 @@ function Service({ id, onBack, onChanged }) {
                       version: batch.version,
                       serials: install ? codes : [],
                       checklist_signed: signed,
+                      executed_on: executedOn,
                       notes,
                     });
                     notify("Rascunho salvo. Você pode continuar depois.");
@@ -691,17 +741,42 @@ export default function TechnicianPortal() {
     [selected, setSelected] = useState(null),
     [revision, setRevision] = useState(0),
     [filter, setFilter] = useState("open"),
-    [password, setPassword] = useState(false);
+    [password, setPassword] = useState(false),
+    [area, setArea] = useState("home"),
+    [criteria, setCriteria] = useState({
+      q: "",
+      vehicle: "",
+      service: "",
+      status: "",
+      from: "",
+      to: "",
+    }),
+    [page, setPage] = useState(1),
+    [total, setTotal] = useState(0);
+  const [searchCriteria, setSearchCriteria] = useState(criteria);
+  useEffect(() => {
+    const timer = setTimeout(() => setSearchCriteria(criteria), 350);
+    return () => clearTimeout(timer);
+  }, [criteria]);
   useEffect(() => {
     let active = true;
     Promise.all([
       api.get("/technician/me"),
-      api.get("/technician/orders?limit=100"),
+      api.get(
+        "/technician/orders?" +
+          new URLSearchParams({
+            ...searchCriteria,
+            page,
+            limit: 100,
+            view: area === "services" ? filter : "",
+          }),
+      ),
     ])
       .then(([m, r]) => {
         if (active) {
           setMe(m.data);
           setItems(r.data.items);
+          setTotal(r.data.total);
           setError("");
         }
       })
@@ -711,7 +786,7 @@ export default function TechnicianPortal() {
     return () => {
       active = false;
     };
-  }, [revision]);
+  }, [revision, searchCriteria, page, filter, area]);
   useEffect(() => {
     if (selected) return;
     const timer = setInterval(() => {
@@ -745,6 +820,21 @@ export default function TechnicianPortal() {
         </div>
         <div className="portal-header-user">
           <span>{me?.name || user.nome}</span>
+          <NoticeBell
+            onOpen={(n) => {
+              if (n.detail.order_id) {
+                setArea("services");
+                setSelected(n.detail.order_id);
+              } else {
+                setSelected(null);
+                setArea(
+                  ["stock", "rates", "finance"].includes(n.target)
+                    ? n.target
+                    : "services",
+                );
+              }
+            }}
+          />
           <button
             className="icon-button"
             aria-label="Alterar senha"
@@ -758,6 +848,27 @@ export default function TechnicianPortal() {
         </div>
       </header>
       <main className="portal-main">
+        <nav className="eco-nav" aria-label="Áreas do portal">
+          {[
+            ["home", "Início", Activity],
+            ["services", "Meus serviços", ClipboardList],
+            ["stock", "Meu estoque", Package],
+            ["finance", "Meu financeiro", Wallet],
+            ["rates", "Meus valores", CircleDollarSign],
+          ].map(([key, label, Icon]) => (
+            <button
+              key={key}
+              className={area === key ? "is-active" : ""}
+              onClick={() => {
+                setArea(key);
+                setSelected(null);
+              }}
+            >
+              <Icon size={18} aria-hidden="true" />
+              <span>{label}</span>
+            </button>
+          ))}
+        </nav>
         {selected ? (
           <Service
             key={selected}
@@ -765,6 +876,21 @@ export default function TechnicianPortal() {
             onBack={() => setSelected(null)}
             onChanged={() => setRevision((r) => r + 1)}
           />
+        ) : area === "home" ? (
+          <Home
+            items={items || []}
+            onOpen={(id) => {
+              setArea("services");
+              setSelected(id);
+            }}
+            onNavigate={setArea}
+          />
+        ) : area === "stock" ? (
+          <Stock />
+        ) : area === "finance" ? (
+          <FinancePanel technical />
+        ) : area === "rates" ? (
+          <Rates />
         ) : (
           <>
             <div className="portal-intro">
@@ -784,17 +910,64 @@ export default function TechnicianPortal() {
             <div className="portal-tabs">
               <button
                 className={filter === "open" ? "is-active" : ""}
-                onClick={() => setFilter("open")}
+                onClick={() => {
+                  setFilter("open");
+                  setPage(1);
+                }}
               >
                 <ClipboardList size={17} />
                 Em atendimento
               </button>
               <button
                 className={filter === "closed" ? "is-active" : ""}
-                onClick={() => setFilter("closed")}
+                onClick={() => {
+                  setFilter("closed");
+                  setPage(1);
+                }}
               >
                 <CheckCheck size={17} />
                 Finalizados
+              </button>
+            </div>
+            <div className="eco-filters">
+              {[
+                ["q", "Número da OS"],
+                ["vehicle", "Veículo"],
+                ["service", "Tipo de serviço"],
+                ["status", "Situação"],
+                ["from", "De"],
+                ["to", "Até"],
+              ].map(([key, label]) => (
+                <label className="eco-field" key={key}>
+                  {label}
+                  <input
+                    type={["from", "to"].includes(key) ? "date" : "search"}
+                    value={criteria[key]}
+                    onChange={(e) => {
+                      setCriteria({ ...criteria, [key]: e.target.value });
+                      setPage(1);
+                    }}
+                  />
+                </label>
+              ))}
+            </div>
+            <div className="eco-row">
+              <button
+                className="secondary-button"
+                disabled={page === 1}
+                onClick={() => setPage((x) => x - 1)}
+              >
+                Anterior
+              </button>
+              <span>
+                {total} serviços · página {page}
+              </span>
+              <button
+                className="secondary-button"
+                disabled={page * 100 >= total}
+                onClick={() => setPage((x) => x + 1)}
+              >
+                Próxima
               </button>
             </div>
             {error && (

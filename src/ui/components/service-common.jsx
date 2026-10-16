@@ -31,6 +31,8 @@ export function Badge({ value }) {
     PENDENTE: ["amber", "Pendente"],
     AGENDADO: ["blue", "Agendado"],
     "EM EXECUÇÃO": ["violet", "Em execução"],
+    "EXECUÇÃO FINALIZADA": ["violet", "Execução finalizada pelo técnico"],
+    "AGUARDANDO CONFERÊNCIA": ["violet", "Aguardando conferência"],
     "AGUARDANDO VALIDAÇÃO": ["violet", "Aguardando validação"],
     CONCLUÍDO: ["mint", "Concluído"],
     CANCELADO: ["gray", "Cancelado"],
