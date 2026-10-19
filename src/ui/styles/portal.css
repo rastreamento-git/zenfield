@@ -755,6 +755,15 @@
   flex-direction: column;
   background: var(--ep-canvas);
 }
+.inventory-app.portal-app {
+  height: auto;
+  min-height: 100dvh;
+  overflow: visible;
+}
+.portal-app > .portal-main {
+  min-width: 0;
+  flex-shrink: 0;
+}
 .portal-header {
   display: flex;
   justify-content: space-between;

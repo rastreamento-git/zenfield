@@ -798,7 +798,13 @@ export default function TechnicianPortal() {
     (o) =>
       (filter === "closed") === ["CONCLUÍDO", "CANCELADO"].includes(o.status),
   );
-  function logout() {
+  async function logout() {
+    try {
+      await api.post("/auth/logout", {});
+    } catch (e) {
+      notify(errorMessage(e), "error");
+      return;
+    }
     saveToken(null);
     window.dispatchEvent(
       new CustomEvent("invent:unauthorized", { detail: { reason: "logout" } }),
