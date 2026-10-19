@@ -1,3 +1,4 @@
+import { passwordInputProps, passwordRequirements } from "./ui/lib/password-policy";
 import { NoticeBell, Home, Stock, FinancePanel, Rates } from "./Ecosystem";
 import { useEffect, useRef, useState } from "react";
 import {
@@ -1031,10 +1032,11 @@ export default function TechnicianPortal() {
       {password && (
         <FormModal
           title="Alterar senha"
-          description="Use uma senha de 12 a 128 caracteres."
+          description={passwordRequirements}
           fields={[
             {
               name: "current_password",
+              autoComplete: "current-password",
               label: "Senha atual",
               type: "password",
               required: true,
@@ -1042,6 +1044,7 @@ export default function TechnicianPortal() {
             },
             {
               name: "new_password",
+              ...passwordInputProps,
               label: "Nova senha",
               type: "password",
               required: true,
