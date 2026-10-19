@@ -302,6 +302,16 @@ function Service({ id, onBack, onChanged }) {
           </p>
         </div>
         <Badge value={order.status} />
+        {order.tracker_waiver_authorized && (
+          <div className="zc-notice">
+            <b>Dispensa de rastreador autorizada</b>
+            <p>
+              Cliente autorizado a permanecer sem rastreador. Esta OS não
+              integra sua remuneração, incluindo adicionais e ajustes. Registre
+              a vistoria e o checklist assinado para conferência da central.
+            </p>
+          </div>
+        )}
         <dl>
           <div>
             <dt>Agendamento</dt>
