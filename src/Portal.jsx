@@ -114,7 +114,7 @@ async function uploadData(file, checklist) {
   }
   return compressedImage(file);
 }
-function Service({ id, onBack, onChanged }) {
+function Service({ id, onBack, onChanged, onOpenRelated }) {
   const [data, setData] = useState(null),
     [error, setError] = useState(""),
     [busy, setBusy] = useState(false),
@@ -217,42 +217,42 @@ function Service({ id, onBack, onChanged }) {
   const generalFiles = files.filter(
     (f) => !["label", "checklist"].includes(f.kind),
   );
-  const generalMinimum = needsChecklist
-    ? (rule.general_photo_min ?? 1)
-    : rule.required_photos
-        .filter((r) => !["label", "checklist"].includes(r.kind))
-        .reduce((n, r) => n + r.min, 0);
+  const equipmentPlan = Object.entries(data.required_equipment || {}).map(
+    ([type, quantity]) => ({
+      type,
+      quantity,
+      received: new Set(
+        files
+          .filter((f) => f.kind === "label" && f.equipment_type === type)
+          .map((f) => f.serial_code),
+      ).size,
+    }),
+  );
   const missing = rule.required_photos
     .filter(
       (r) =>
-        ["label", "checklist"].includes(r.kind) &&
+        r.kind === "checklist" &&
         files.filter((f) => f.kind === r.kind).length < r.min,
     )
     .map((r) => r.label);
-  if (generalFiles.length < generalMinimum)
-    missing.push(
-      `Fotos do atendimento (${generalFiles.length}/${generalMinimum})`,
-    );
   if (
     needsChecklist &&
     !files.some((f) => f.kind === "checklist") &&
     !missing.includes("Checklist assinado")
   )
     missing.push("Checklist assinado");
-  if (install && codes.length < rule.min_serials)
-    missing.push("Foto legível do equipamento");
-  if (install && needsChecklist)
-    for (const [type, min] of Object.entries(data.required_equipment || {})) {
-      const received = new Set(
-        files
-          .filter((f) => f.kind === "label" && f.equipment_type === type)
-          .map((f) => f.serial_code),
-      );
-      if (received.size < min)
+  if (install) {
+    for (const item of equipmentPlan) {
+      if (item.received < item.quantity)
         missing.push(
-          `${min} ${type === "TAG" ? "TAG(s)" : "rastreador(es)"} previsto(s) na OS`,
+          `Foto de ${item.quantity} ${item.type === "TAG" ? "TAG(s)" : "rastreador(es)"} previsto(s) nesta OS`,
+        );
+      if (item.received > item.quantity)
+        missing.push(
+          "Equipamento além do previsto: abra uma OS de equipamento adicional com a central.",
         );
     }
+  }
   if (needsChecklist && !signed)
     missing.push("Confirmar assinatura do checklist");
   async function addFiles(selected, kind, retryId = null) {
@@ -447,13 +447,43 @@ function Service({ id, onBack, onChanged }) {
           </p>
         </div>
         <Badge value={order.status} />
+        {order.parent_order_id && (
+          <div className="zc-notice">
+            <strong>
+              OS de equipamento adicional · {order.additional_equipment}
+            </strong>
+            <p>
+              OS principal: {order.parent_order_id}. Este serviço tem
+              conferência e remuneração próprias.
+            </p>
+          </div>
+        )}
+        {!!data.additional_orders?.length && (
+          <div className="zc-notice">
+            <strong>OS de equipamento adicional vinculada</strong>
+            <p>Registre os equipamentos extras nos respectivos atendimentos.</p>
+            {data.additional_orders.map((extra) => (
+              <button
+                className="secondary-button"
+                type="button"
+                disabled={busy}
+                key={extra.id}
+                onClick={() => onOpenRelated(extra.id)}
+              >
+                Abrir OS adicional {extra.id} · {extra.additional_equipment}
+              </button>
+            ))}
+          </div>
+        )}
+
         {order.tracker_waiver_authorized && (
           <div className="zc-notice">
             <b>Dispensa de rastreador autorizada</b>
             <p>
               Cliente autorizado a permanecer sem rastreador. Esta OS não
-              integra sua remuneração, incluindo adicionais e ajustes. Registre
-              a vistoria e o checklist assinado para conferência da central.
+              integra sua remuneração, incluindo adicionais e ajustes. Anexe o
+              checklist assinado para conferência da central. As fotos gerais
+              são opcionais.
             </p>
           </div>
         )}
@@ -615,7 +645,7 @@ function Service({ id, onBack, onChanged }) {
           )}
           <div className="portal-progress" aria-label="Etapas do registro">
             {[
-              "Fotos do serviço",
+              "Fotos (opcional)",
               ...(install ? ["Equipamentos"] : []),
               "Checklist",
               "Enviar",
@@ -630,7 +660,7 @@ function Service({ id, onBack, onChanged }) {
             <div className="portal-step-title">
               <span>1</span>
               <div>
-                <h2>Fotos do serviço e da vistoria</h2>
+                <h2>Fotos do atendimento (opcionais)</h2>
                 <p>
                   Use os botões abaixo. Confira se as fotos ficaram nítidas.
                 </p>
@@ -639,9 +669,9 @@ function Service({ id, onBack, onChanged }) {
             <div className="portal-capture-group">
               <h3>Fotos do atendimento</h3>
               <p>
-                {generalFiles.length} recebida(s) · Mínimo: {generalMinimum}.
-                Adicione as fotos do veículo, do serviço e da vistoria juntas,
-                sem escolher categoria.
+                {generalFiles.length} recebida(s) · Opcional, sem quantidade
+                mínima. Adicione fotos do veículo, serviço ou vistoria quando
+                forem úteis para registrar o atendimento.
               </p>
               <FileButtons
                 disabled={busy || stale}
@@ -656,7 +686,7 @@ function Service({ id, onBack, onChanged }) {
               <div className="portal-step-title">
                 <span>2</span>
                 <div>
-                  <h2>Foto do rastreador ou da TAG</h2>
+                  <h2>Equipamentos previstos nesta OS</h2>
                   <p>
                     Selecione várias fotos, uma por equipamento, mostrando toda
                     a etiqueta com o código de barras ou QR Code. O leitor
@@ -667,6 +697,41 @@ function Service({ id, onBack, onChanged }) {
                   </p>
                 </div>
               </div>
+              <div
+                className="portal-equipment-plan"
+                aria-label="Fotos dos equipamentos previstos"
+              >
+                {equipmentPlan
+                  .filter((item) => item.quantity > 0)
+                  .map((item) => (
+                    <div
+                      className={
+                        "portal-equipment-requirement " +
+                        (item.received === item.quantity ? "is-complete" : "")
+                      }
+                      key={item.type}
+                    >
+                      <strong>
+                        {item.quantity}{" "}
+                        {item.type === "TAG" ? "TAG" : "rastreador"}
+                        {item.quantity > 1 ? "(s)" : ""}
+                      </strong>
+                      <p>
+                        {item.received} de {item.quantity} identificado(s)
+                      </p>
+                      <span>
+                        {item.received < item.quantity
+                          ? `Envie a foto da etiqueta ${item.type === "TAG" ? "da TAG" : "do rastreador"}.`
+                          : "Foto e código recebidos."}
+                      </span>
+                    </div>
+                  ))}
+              </div>
+              <p className="zc-muted">
+                Equipamentos extras têm uma OS de equipamento adicional, com
+                atendimento e remuneração próprios. Envie cada etiqueta na OS
+                correspondente.
+              </p>
               <FileButtons
                 disabled={busy || stale}
                 onFiles={(files) => addFiles(files, "label")}
@@ -1096,6 +1161,7 @@ export default function TechnicianPortal({
             id={selected}
             onBack={() => setSelected(null)}
             onChanged={() => setRevision((r) => r + 1)}
+            onOpenRelated={setSelected}
           />
         ) : area === "home" ? (
           <Home

@@ -1567,3 +1567,32 @@
     flex-wrap: wrap;
   }
 }
+
+.portal-equipment-plan {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 210px), 1fr));
+  gap: 12px;
+  margin: 18px 0;
+}
+.portal-equipment-requirement {
+  padding: 16px;
+  border: 1px solid var(--ep-line);
+  border-radius: 12px;
+  background: var(--ep-subtle);
+}
+.portal-equipment-requirement strong {
+  color: var(--ep-text);
+  font-size: 16px;
+}
+.portal-equipment-requirement p,
+.portal-equipment-requirement span {
+  color: var(--ep-muted);
+  font-size: 13px;
+}
+.portal-equipment-requirement.is-complete {
+  border-color: var(--ep-green-ink);
+  background: var(--ep-green-soft);
+}
+.portal-equipment-requirement.is-complete span {
+  color: var(--ep-green-ink);
+}
