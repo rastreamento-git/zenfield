@@ -34,10 +34,7 @@ import {
   FormModal,
   download,
 } from "@zenfield/ui/components/service-common";
-import {
-  EvidencePhoto,
-  photoLabels,
-} from "@zenfield/ui/components/ServiceEvidence";
+import { EvidencePhoto } from "@zenfield/ui/components/ServiceEvidence";
 async function compressedImage(file) {
   if (!file.type.startsWith("image/")) throw Error("Escolha uma imagem.");
   if (file.size > 24 * 1024 * 1024) throw Error("Use uma foto de até 24 MB.");
@@ -127,6 +124,7 @@ function Service({ id, onBack, onChanged }) {
     [confirmed, setConfirmed] = useState(false),
     [signed, setSigned] = useState(false),
     [uploadStatus, setUploadStatus] = useState(""),
+    [equipmentFeedback, setEquipmentFeedback] = useState(null),
     [retry, setRetry] = useState(null);
   const loadedBatch = useRef(null);
   async function reload() {
@@ -209,12 +207,25 @@ function Service({ id, onBack, onChanged }) {
     ),
   ];
   const needsChecklist = !batch || batch.capture_version >= 2;
-  const photoRequirements = rule.required_photos.filter(
-    (r) => !["label", "checklist"].includes(r.kind),
+  const generalFiles = files.filter(
+    (f) => !["label", "checklist"].includes(f.kind),
   );
+  const generalMinimum = needsChecklist
+    ? (rule.general_photo_min ?? 1)
+    : rule.required_photos
+        .filter((r) => !["label", "checklist"].includes(r.kind))
+        .reduce((n, r) => n + r.min, 0);
   const missing = rule.required_photos
-    .filter((r) => files.filter((f) => f.kind === r.kind).length < r.min)
+    .filter(
+      (r) =>
+        ["label", "checklist"].includes(r.kind) &&
+        files.filter((f) => f.kind === r.kind).length < r.min,
+    )
     .map((r) => r.label);
+  if (generalFiles.length < generalMinimum)
+    missing.push(
+      `Fotos do atendimento (${generalFiles.length}/${generalMinimum})`,
+    );
   if (
     needsChecklist &&
     !files.some((f) => f.kind === "checklist") &&
@@ -223,8 +234,6 @@ function Service({ id, onBack, onChanged }) {
     missing.push("Checklist assinado");
   if (install && codes.length < rule.min_serials)
     missing.push("Foto legível do equipamento");
-  if (needsChecklist && !files.some((f) => f.kind === "inspection"))
-    missing.push("Fotos da vistoria");
   if (install && needsChecklist)
     for (const [type, min] of Object.entries(data.required_equipment || {})) {
       const received = new Set(
@@ -247,28 +256,53 @@ function Service({ id, onBack, onChanged }) {
           ? "Lendo o código e identificando o equipamento…"
           : "Enviando arquivo…",
       );
-      const image = await uploadData(file, kind === "checklist");
-      const { data: result } = await api.post(
-        "/technician/batches/" + batch.id + "/photos",
-        { version: batch.version, kind, image },
-        { timeout: 120000 },
-      );
-      setRetry(null);
-      setConfirmed(false);
-      notify(
-        result.serial_code
+      if (kind === "label")
+        setEquipmentFeedback({
+          status: "reading",
+          message: "Lendo o código de barras ou QR Code…",
+        });
+      try {
+        const image = await uploadData(file, kind === "checklist");
+        const { data: result } = await api.post(
+          "/technician/batches/" + batch.id + "/photos",
+          {
+            version: batch.version,
+            ...(kind === "other" ? {} : { kind }),
+            image,
+          },
+          { timeout: 120000 },
+        );
+        setRetry(null);
+        setConfirmed(false);
+        const message = result.serial_code
           ? (result.equipment_type === "TAG"
               ? "TAG identificada: "
-              : "Rastreador identificado: ") + result.serial_code
-          : "Arquivo recebido.",
-      );
+              : "Rastreador identificado · IMEI/serial: ") + result.serial_code
+          : "Arquivo recebido.";
+        if (kind === "label")
+          setEquipmentFeedback({ status: "success", message });
+        notify(message);
+      } catch (e) {
+        if (kind === "label")
+          setEquipmentFeedback({
+            status: "error",
+            message: e.response
+              ? errorMessage(e)
+              : e.message || errorMessage(e),
+          });
+        throw e;
+      }
     });
   }
   function photos(kind) {
     return (
       <div className="zc-evidence-grid">
         {files
-          .filter((f) => f.kind === kind)
+          .filter((f) =>
+            kind === "other"
+              ? !["label", "checklist"].includes(f.kind)
+              : f.kind === kind,
+          )
           .map((f) => (
             <EvidencePhoto key={f.id} file={f}>
               <button
@@ -384,20 +418,21 @@ function Service({ id, onBack, onChanged }) {
           Baixar OS em PDF
         </button>
       </section>
-      {error && (
-        <div className="error-banner" role="alert">
-          {error}
-          {retry && draft && !stale && (
-            <button
-              className="secondary-button"
-              disabled={busy}
-              onClick={() => addFile(retry.file, retry.kind)}
-            >
-              Tentar enviar novamente
-            </button>
-          )}
-        </div>
-      )}
+      {error &&
+        !(retry?.kind === "label" && equipmentFeedback?.status === "error") && (
+          <div className="error-banner" role="alert">
+            {error}
+            {retry && draft && !stale && (
+              <button
+                className="secondary-button"
+                disabled={busy}
+                onClick={() => addFile(retry.file, retry.kind)}
+              >
+                Tentar enviar novamente
+              </button>
+            )}
+          </div>
+        )}
       {busy && (
         <div className="zc-notice" role="status" aria-live="polite">
           {uploadStatus || "Salvando…"} Aguarde nesta tela.
@@ -497,36 +532,19 @@ function Service({ id, onBack, onChanged }) {
                 </p>
               </div>
             </div>
-            {[
-              ...photoRequirements,
-              ...(!photoRequirements.some((r) => r.kind === "inspection")
-                ? [
-                    {
-                      kind: "inspection",
-                      label: "Fotos da vistoria",
-                      min: needsChecklist ? 1 : 0,
-                    },
-                  ]
-                : []),
-              ...(!photoRequirements.some((r) => r.kind === "other")
-                ? [{ kind: "other", label: "Fotos complementares", min: 0 }]
-                : []),
-            ].map((r) => (
-              <div className="portal-capture-group" key={r.kind}>
-                <h3>{r.label}</h3>
-                <p>
-                  {files.filter((f) => f.kind === r.kind).length} recebida(s) ·{" "}
-                  {r.min
-                    ? `Mínimo: ${r.min}`
-                    : "Adicione conforme a vistoria do atendimento"}
-                </p>
-                <FileButtons
-                  disabled={busy || stale}
-                  onFile={(file) => addFile(file, r.kind)}
-                />
-                {photos(r.kind)}
-              </div>
-            ))}
+            <div className="portal-capture-group">
+              <h3>Fotos do atendimento</h3>
+              <p>
+                {generalFiles.length} recebida(s) · Mínimo: {generalMinimum}.
+                Adicione as fotos do veículo, do serviço e da vistoria juntas,
+                sem escolher categoria.
+              </p>
+              <FileButtons
+                disabled={busy || stale}
+                onFile={(file) => addFile(file, "other")}
+              />
+              {photos("other")}
+            </div>
           </section>
           {install && (
             <section className="dashboard-panel portal-step">
@@ -536,8 +554,11 @@ function Service({ id, onBack, onChanged }) {
                   <h2>Foto do rastreador ou da TAG</h2>
                   <p>
                     Uma foto por equipamento, mostrando toda a etiqueta com o
-                    código de barras ou QR Code. Identificamos o código e o tipo
-                    automaticamente.
+                    código de barras ou QR Code. O leitor identifica o IMEI do
+                    rastreador ou o serial da TAG e confere com sua carga no
+                    EstoquePro. Se a leitura falhar ou o código não
+                    corresponder, avisaremos aqui e a foto não será aceita como
+                    equipamento identificado.
                   </p>
                 </div>
               </div>
@@ -545,6 +566,38 @@ function Service({ id, onBack, onChanged }) {
                 disabled={busy || stale}
                 onFile={(file) => addFile(file, "label")}
               />
+              {equipmentFeedback && (
+                <div
+                  className={
+                    equipmentFeedback.status === "error"
+                      ? "error-banner"
+                      : "zc-notice"
+                  }
+                  role={
+                    equipmentFeedback.status === "error" ? "alert" : "status"
+                  }
+                  aria-live={
+                    equipmentFeedback.status === "error"
+                      ? "assertive"
+                      : "polite"
+                  }
+                >
+                  <strong>
+                    {equipmentFeedback.status === "error"
+                      ? "Equipamento não identificado"
+                      : equipmentFeedback.status === "reading"
+                        ? "Identificando equipamento"
+                        : "Leitura confirmada"}
+                  </strong>
+                  <p>{equipmentFeedback.message}</p>
+                  {equipmentFeedback.status === "error" && (
+                    <p>
+                      Confira a etiqueta, evite reflexos e envie uma nova foto
+                      nítida de um único equipamento.
+                    </p>
+                  )}
+                </div>
+              )}
               {photos("label")}
               {!codes.length && (
                 <p className="zc-muted">
