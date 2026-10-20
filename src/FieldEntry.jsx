@@ -1,3 +1,6 @@
+import { appearanceUrl } from "./ui/lib/appearance";
+import ThemeControl from "./ui/components/ThemeControl";
+import ZenMark from "./ui/components/ZenMark";
 import { useEffect, useState } from "react";
 import {
   ArrowLeft,
@@ -91,7 +94,7 @@ export default function FieldEntry() {
       <header className="portal-header">
         <div className="brand">
           <span className="brand-mark">
-            <Smartphone size={23} />
+            <ZenMark variant="field" size={36} />
           </span>
           <div>
             <strong>
@@ -100,11 +103,21 @@ export default function FieldEntry() {
             <small>ZenTracking · Central</small>
           </div>
         </div>
-        <span>{user.nome}</span>
+        <div className="field-selector-account">
+          <ThemeControl />
+          <span>{user.nome}</span>
+        </div>
       </header>
       <main className="portal-main field-selector-main">
         {trackingUrl && (
-          <a className="secondary-button" href={trackingUrl}>
+          <a
+            className="secondary-button"
+            href={trackingUrl}
+            onClick={(e) => {
+              e.preventDefault();
+              window.location.assign(appearanceUrl(trackingUrl));
+            }}
+          >
             <ArrowLeft size={16} />
             Aplicativos
           </a>

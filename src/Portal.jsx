@@ -1,3 +1,6 @@
+import { appearanceUrl } from "./ui/lib/appearance";
+import ThemeControl from "./ui/components/ThemeControl";
+import ZenMark from "./ui/components/ZenMark";
 import {
   passwordInputProps,
   passwordRequirements,
@@ -56,11 +59,11 @@ async function compressedImage(file) {
     URL.revokeObjectURL(uri);
   }
 }
-function FileButtons({ disabled, checklist = false, onFile }) {
+function FileButtons({ disabled, checklist = false, onFiles }) {
   function selected(e) {
-    const file = e.target.files?.[0];
+    const files = Array.from(e.target.files || []);
     e.target.value = "";
-    if (file) onFile(file);
+    if (files.length) onFiles(files);
   }
   return (
     <div className="portal-file-buttons">
@@ -80,11 +83,14 @@ function FileButtons({ disabled, checklist = false, onFile }) {
       </label>
       <label className={"secondary-button " + (disabled ? "is-disabled" : "")}>
         <Download size={17} />
-        {checklist ? "Anexar PDF ou foto" : "Escolher foto"}
+        {checklist ? "Anexar PDFs ou fotos" : "Escolher fotos"}
         <input
-          aria-label={checklist ? "Anexar checklist assinado" : "Escolher foto"}
+          aria-label={
+            checklist ? "Anexar checklist assinado" : "Escolher fotos"
+          }
           type="file"
           accept={checklist ? "application/pdf,image/*" : "image/*"}
+          multiple
           disabled={disabled}
           onChange={selected}
         />
@@ -125,7 +131,8 @@ function Service({ id, onBack, onChanged }) {
     [signed, setSigned] = useState(false),
     [uploadStatus, setUploadStatus] = useState(""),
     [equipmentFeedback, setEquipmentFeedback] = useState(null),
-    [retry, setRetry] = useState(null);
+    [queues, setQueues] = useState({});
+  const uploading = useRef(false);
   const loadedBatch = useRef(null);
   async function reload() {
     const { data: next } = await api.get(
@@ -248,51 +255,151 @@ function Service({ id, onBack, onChanged }) {
     }
   if (needsChecklist && !signed)
     missing.push("Confirmar assinatura do checklist");
-  async function addFile(file, kind) {
-    setRetry({ file, kind });
-    await act(async () => {
-      setUploadStatus(
-        kind === "label"
-          ? "Lendo o código e identificando o equipamento…"
-          : "Enviando arquivo…",
+  async function addFiles(selected, kind, retryId = null) {
+    if (uploading.current || !selected.length) return;
+    if (files.length + selected.length > 30) {
+      setError(
+        `Limite de 30 arquivos por atendimento. Você ainda pode adicionar ${30 - files.length}.`,
       );
-      if (kind === "label")
-        setEquipmentFeedback({
-          status: "reading",
-          message: "Lendo o código de barras ou QR Code…",
-        });
-      try {
-        const image = await uploadData(file, kind === "checklist");
-        const { data: result } = await api.post(
-          "/technician/batches/" + batch.id + "/photos",
-          {
-            version: batch.version,
-            ...(kind === "other" ? {} : { kind }),
-            image,
-          },
-          { timeout: 120000 },
-        );
-        setRetry(null);
-        setConfirmed(false);
-        const message = result.serial_code
-          ? (result.equipment_type === "TAG"
-              ? "TAG identificada: "
-              : "Rastreador identificado · IMEI/serial: ") + result.serial_code
-          : "Arquivo recebido.";
-        if (kind === "label")
-          setEquipmentFeedback({ status: "success", message });
-        notify(message);
-      } catch (e) {
+      return;
+    }
+    uploading.current = true;
+    const queue = selected.map((file) => ({
+      id: retryId || crypto.randomUUID(),
+      file,
+      status: "waiting",
+      message: "Na fila",
+    }));
+    const update = (id, patch) =>
+      setQueues((all) => ({
+        ...all,
+        [kind]: all[kind].map((row) =>
+          row.id === id ? { ...row, ...patch } : row,
+        ),
+      }));
+    const remainingFailures = retryId
+      ? (queues[kind] || []).filter(
+          (row) => row.id !== retryId && row.status === "error",
+        ).length
+      : 0;
+    setQueues((all) => ({
+      ...all,
+      [kind]: retryId
+        ? all[kind].map((row) => (row.id === retryId ? queue[0] : row))
+        : queue,
+    }));
+    try {
+      await act(async () => {
+        let version = batch.version,
+          received = 0;
+        const failures = [];
+        for (let i = 0; i < queue.length; i++) {
+          const row = queue[i];
+          const message = `${i + 1} de ${queue.length}: ${row.file.name}`;
+          setUploadStatus(
+            (kind === "label"
+              ? "Identificando equipamento · "
+              : "Enviando arquivo · ") + message,
+          );
+          update(row.id, {
+            status: "uploading",
+            message:
+              kind === "label"
+                ? "Lendo código de barras ou QR Code…"
+                : "Enviando…",
+          });
+          if (kind === "label")
+            setEquipmentFeedback({ status: "reading", message });
+          try {
+            const image = await uploadData(row.file, kind === "checklist");
+            const { data: result } = await api.post(
+              "/technician/batches/" + batch.id + "/photos",
+              { version, ...(kind === "other" ? {} : { kind }), image },
+              { timeout: 120000 },
+            );
+            version = result.version;
+            received++;
+            setConfirmed(false);
+            update(row.id, {
+              status: "success",
+              message: result.serial_code
+                ? (result.equipment_type === "TAG"
+                    ? "TAG identificada: "
+                    : "Rastreador identificado · IMEI/serial: ") +
+                  result.serial_code
+                : "Arquivo recebido",
+            });
+          } catch (e) {
+            const reason = e.response
+              ? errorMessage(e)
+              : e.message || errorMessage(e);
+            failures.push(reason);
+            update(row.id, { status: "error", message: reason });
+            // A validation error did not save the file, so the next image keeps
+            // the same version. Any uncertain result stops the queue for review.
+            if (e.isAxiosError && e.response?.status !== 400) {
+              for (const pending of queue.slice(i + 1))
+                update(pending.id, {
+                  status: "error",
+                  message:
+                    "Não enviado. Confira os arquivos recebidos e tente novamente.",
+                });
+              if (kind === "label")
+                setEquipmentFeedback({ status: "error", message: reason });
+              throw e;
+            }
+          }
+        }
         if (kind === "label")
           setEquipmentFeedback({
-            status: "error",
-            message: e.response
-              ? errorMessage(e)
-              : e.message || errorMessage(e),
+            status: failures.length || remainingFailures ? "error" : "success",
+            message: failures.length
+              ? `${received} equipamento(s) identificado(s); ${failures.length} foto(s) não aceita(s). ${failures[0]}`
+              : remainingFailures
+                ? `${received} equipamento(s) identificado(s). Há ${remainingFailures} outra(s) foto(s) pendente(s) na lista.`
+                : `${received} equipamento(s) identificado(s). Confira os IMEIs/seriais abaixo.`,
           });
-        throw e;
-      }
-    });
+        else if (failures.length)
+          setError(
+            `${failures.length} arquivo(s) não enviado(s). Confira os avisos na lista de arquivos.`,
+          );
+        if (received) notify(`${received} arquivo(s) recebido(s).`);
+      });
+    } finally {
+      uploading.current = false;
+    }
+  }
+  function uploadQueue(kind) {
+    const queue = queues[kind];
+    if (!queue?.length) return null;
+    return (
+      <div
+        className="portal-upload-queue"
+        aria-label="Arquivos selecionados"
+        aria-live="polite"
+      >
+        <ul>
+          {queue.map((row) => (
+            <li key={row.id} className={"upload-" + row.status}>
+              <div>
+                <strong>{row.file.name}</strong>
+                <span>{row.message}</span>
+              </div>
+              {row.status === "error" && (
+                <button
+                  type="button"
+                  className="secondary-button"
+                  disabled={busy || stale}
+                  onClick={() => addFiles([row.file], kind, row.id)}
+                >
+                  Tentar novamente
+                </button>
+              )}
+            </li>
+          ))}
+        </ul>
+      </div>
+    );
   }
   function photos(kind) {
     return (
@@ -367,6 +474,13 @@ function Service({ id, onBack, onChanged }) {
         {doc && (
           <details className="portal-full-order" open>
             <summary>Ordem de serviço completa</summary>
+            <img
+              className="zen-order-logo"
+              src="/brand/zen-seguros.png"
+              alt="ZEN SEGUROS"
+              width="2055"
+              height="694"
+            />
             <dl>
               {[
                 ["Associado", doc.customer.name],
@@ -418,21 +532,11 @@ function Service({ id, onBack, onChanged }) {
           Baixar OS em PDF
         </button>
       </section>
-      {error &&
-        !(retry?.kind === "label" && equipmentFeedback?.status === "error") && (
-          <div className="error-banner" role="alert">
-            {error}
-            {retry && draft && !stale && (
-              <button
-                className="secondary-button"
-                disabled={busy}
-                onClick={() => addFile(retry.file, retry.kind)}
-              >
-                Tentar enviar novamente
-              </button>
-            )}
-          </div>
-        )}
+      {error && (
+        <div className="error-banner" role="alert">
+          {error}
+        </div>
+      )}
       {busy && (
         <div className="zc-notice" role="status" aria-live="polite">
           {uploadStatus || "Salvando…"} Aguarde nesta tela.
@@ -541,8 +645,9 @@ function Service({ id, onBack, onChanged }) {
               </p>
               <FileButtons
                 disabled={busy || stale}
-                onFile={(file) => addFile(file, "other")}
+                onFiles={(files) => addFiles(files, "other")}
               />
+              {uploadQueue("other")}
               {photos("other")}
             </div>
           </section>
@@ -553,18 +658,18 @@ function Service({ id, onBack, onChanged }) {
                 <div>
                   <h2>Foto do rastreador ou da TAG</h2>
                   <p>
-                    Uma foto por equipamento, mostrando toda a etiqueta com o
-                    código de barras ou QR Code. O leitor identifica o IMEI do
-                    rastreador ou o serial da TAG e confere com sua carga no
-                    EstoquePro. Se a leitura falhar ou o código não
-                    corresponder, avisaremos aqui e a foto não será aceita como
-                    equipamento identificado.
+                    Selecione várias fotos, uma por equipamento, mostrando toda
+                    a etiqueta com o código de barras ou QR Code. O leitor
+                    identifica o IMEI do rastreador ou o serial da TAG e confere
+                    com sua carga no EstoquePro. Se a leitura falhar ou o código
+                    não corresponder, avisaremos aqui e a foto não será aceita
+                    como equipamento identificado.
                   </p>
                 </div>
               </div>
               <FileButtons
                 disabled={busy || stale}
-                onFile={(file) => addFile(file, "label")}
+                onFiles={(files) => addFiles(files, "label")}
               />
               {equipmentFeedback && (
                 <div
@@ -598,6 +703,7 @@ function Service({ id, onBack, onChanged }) {
                   )}
                 </div>
               )}
+              {uploadQueue("label")}
               {photos("label")}
               {!codes.length && (
                 <p className="zc-muted">
@@ -620,8 +726,9 @@ function Service({ id, onBack, onChanged }) {
             <FileButtons
               checklist
               disabled={busy || stale}
-              onFile={(file) => addFile(file, "checklist")}
+              onFiles={(files) => addFiles(files, "checklist")}
             />
+            {uploadQueue("checklist")}
             {photos("checklist")}
             <label className="zc-checkbox">
               <input
@@ -727,7 +834,6 @@ function Service({ id, onBack, onChanged }) {
                         confirmed,
                       },
                     );
-                    setRetry(null);
                     notify(
                       "Arquivos enviados. Confirmação pendente da central.",
                     );
@@ -887,7 +993,7 @@ export default function TechnicianPortal({
       <header className="portal-header">
         <div className="brand">
           <span className="brand-mark">
-            <Activity size={23} />
+            <ZenMark variant="field" size={36} />
           </span>
           <div>
             <strong>
@@ -897,6 +1003,7 @@ export default function TechnicianPortal({
           </div>
         </div>
         <div className="portal-header-user">
+          <ThemeControl />
           <span>{me?.name || user.nome}</span>
           <NoticeBell
             onOpen={(n) => {
@@ -947,7 +1054,14 @@ export default function TechnicianPortal({
               Trocar técnico
             </button>
             {trackingUrl && (
-              <a className="secondary-button" href={trackingUrl}>
+              <a
+                className="secondary-button"
+                href={trackingUrl}
+                onClick={(e) => {
+                  e.preventDefault();
+                  window.location.assign(appearanceUrl(trackingUrl));
+                }}
+              >
                 Aplicativos
               </a>
             )}
