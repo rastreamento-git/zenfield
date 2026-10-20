@@ -1,4 +1,7 @@
-import { passwordInputProps, passwordRequirements } from "./ui/lib/password-policy";
+import {
+  passwordInputProps,
+  passwordRequirements,
+} from "./ui/lib/password-policy";
 import { NoticeBell, Home, Stock, FinancePanel, Rates } from "./Ecosystem";
 import { useEffect, useRef, useState } from "react";
 import {
@@ -604,6 +607,7 @@ function Service({ id, onBack, onChanged }) {
             <label className="zc-field zc-full">
               Observações do atendimento (opcional)
               <textarea
+                aria-label="Observações do atendimento (opcional)"
                 rows={3}
                 maxLength={6000}
                 value={notes}
@@ -744,7 +748,11 @@ function Service({ id, onBack, onChanged }) {
     </div>
   );
 }
-export default function TechnicianPortal() {
+export default function TechnicianPortal({
+  supervision,
+  onChangeTechnician,
+  trackingUrl,
+}) {
   const user = useSession(),
     [items, setItems] = useState(null),
     [me, setMe] = useState(null),
@@ -854,7 +862,7 @@ export default function TechnicianPortal() {
           />
           <button
             className="icon-button"
-            aria-label="Alterar senha"
+            aria-label={supervision ? "Alterar minha senha" : "Alterar senha"}
             onClick={() => setPassword(true)}
           >
             <KeyRound size={18} />
@@ -864,6 +872,35 @@ export default function TechnicianPortal() {
           </button>
         </div>
       </header>
+      {supervision && (
+        <section
+          className="portal-supervision"
+          aria-label="Ambiente selecionado"
+        >
+          <div>
+            <small>ZENFIELD · ACESSO DA CENTRAL</small>
+            <strong>Ambiente de {supervision.name}</strong>
+            <p>
+              Ações realizadas por {user.nome || user.login}. Sua identidade
+              permanece registrada na auditoria.
+            </p>
+          </div>
+          <div className="portal-supervision-actions">
+            <button
+              type="button"
+              className="secondary-button"
+              onClick={onChangeTechnician}
+            >
+              Trocar técnico
+            </button>
+            {trackingUrl && (
+              <a className="secondary-button" href={trackingUrl}>
+                Aplicativos
+              </a>
+            )}
+          </div>
+        </section>
+      )}
       <main className="portal-main">
         <nav className="eco-nav" aria-label="Áreas do portal">
           {[
@@ -1031,8 +1068,12 @@ export default function TechnicianPortal() {
       <AppFooter product="ZenField" />
       {password && (
         <FormModal
-          title="Alterar senha"
-          description={passwordRequirements}
+          title={supervision ? "Alterar minha senha" : "Alterar senha"}
+          description={
+            (supervision
+              ? `Senha da sua conta ZenTracking (${user.login}). `
+              : "") + passwordRequirements
+          }
           fields={[
             {
               name: "current_password",
