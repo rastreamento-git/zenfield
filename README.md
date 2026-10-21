@@ -1,3 +1,5 @@
+> **ZenField 1.1 — branch de homologação.** Use o [guia local do ecossistema](https://github.com/rastreamento-git/zencontrol/blob/feat/ecossistema-homologacao/HOMOLOGACAO.md). Requer API ZenControl 6.4. O fluxo de primeiro acesso, notificações e financeiro exige a migração 005 do backend. Não executar deploy/migrações em produção nesta etapa.
+
 # ZenField
 
 Portal dos técnicos — versão 1.0.0. Projeto independente do repositório ZenControl, com dependências, login, sessão e publicação próprios. Não usa workspaces nem importa arquivos de outro projeto.
@@ -76,3 +78,7 @@ VITE_API_URL=https://zencontrol.onrender.com npm run build
 No PowerShell, defina `$env:VITE_API_URL='https://zencontrol.onrender.com'` antes de executar `npm run build`.
 
 O workflow incluído verifica as fontes e o build do ZenField sem baixar o ZenControl. Os testes do backend ficam no repositório da central. PDFs assinados são conferidos pelo operador; etiquetas precisam mostrar um código de barras ou QR Code legível.
+
+As observações do técnico são obrigatórias ao registrar a execução finalizada e ao enviar para conferência. O rascunho pode ser salvo incompleto. Equipamentos adicionais aparecem junto à OS principal na listagem, com um único registro de fotos, checklist, observações e PDF para as novas OS com quantidades. Cada equipamento extra é contabilizado internamente. O aviso de veículo elétrico orienta a confirmar a autorização do cliente; somente a central pode autorizar a dispensa de rastreador.
+
+Reinstalações com reaproveitamento identificam aparelhos já instalados. A central confere essa condição e o Estoque Pro registra a reinstalação sem consumir novamente a carga. Reagendamentos aguardam a confirmação de nova data antes de abrir o registro de execução.

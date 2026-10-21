@@ -1,0 +1,556 @@
+/* Field work: clear next actions, compact summaries and a thumb-friendly navigation. */
+.portal-app .brand strong,
+.portal-app .brand strong span {
+  color: var(--ep-text);
+  font-size: 22px;
+}
+.portal-app .brand small {
+  color: var(--ep-muted);
+  font-size: 11px;
+}
+.portal-header {
+  padding-block: 20px;
+}
+.portal-main {
+  width: min(1160px, 100%);
+  padding: 26px 28px 50px;
+  margin-inline: auto;
+}
+.portal-header-user {
+  gap: 8px;
+}
+.portal-header-user > span {
+  font-size: 12px;
+}
+.eco-nav {
+  width: fit-content;
+  max-width: 100%;
+  padding: 5px;
+  gap: 4px;
+  border: 1px solid var(--ep-line);
+  border-radius: 14px;
+  background: var(--ep-surface);
+  margin-bottom: 30px;
+}
+.eco-nav button {
+  min-height: 44px;
+  padding: 10px 17px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  color: var(--ep-muted);
+  font-size: 13px;
+  font-weight: 550;
+}
+.eco-nav button:hover {
+  background: var(--ep-subtle);
+  color: var(--ep-text);
+}
+.eco-nav button.is-active {
+  background: var(--ep-primary);
+  color: #fff;
+  box-shadow: 0 3px 7px #245edd20;
+}
+.eco-section > h1 {
+  color: var(--ep-text);
+  font-size: 30px;
+  letter-spacing: -0.9px;
+  line-height: 1.25;
+  font-weight: 650;
+}
+.eco-section > p {
+  color: var(--ep-muted);
+  font-size: 14px;
+  line-height: 1.7;
+}
+.eco-section h2 {
+  color: var(--ep-text);
+  font-size: 18px;
+}
+.eco-card {
+  border-radius: 16px;
+  padding: 24px;
+}
+.eco-field {
+  color: var(--ep-text);
+  font-size: 13px;
+  font-weight: 550;
+}
+.eco-field input,
+.eco-field select,
+.eco-field textarea {
+  background: var(--ep-surface);
+  border-color: var(--ep-line);
+  color: var(--ep-text);
+  font-size: 14px;
+}
+.eco-info {
+  background: var(--ep-primary-soft);
+  color: var(--ep-primary-ink);
+  border-color: var(--ep-line);
+}
+.eco-table-wrap,
+.eco-table-wrap td,
+.eco-table-wrap th {
+  border-color: var(--ep-line);
+}
+.eco-table-wrap table {
+  background: var(--ep-surface);
+  color: var(--ep-text);
+}
+.eco-table-wrap th {
+  background: var(--ep-subtle);
+  color: var(--ep-muted);
+  font-size: 11px;
+}
+.eco-table-wrap small {
+  color: var(--ep-muted);
+}
+.eco-notices {
+  background: var(--ep-surface);
+  color: var(--ep-text);
+  border-color: var(--ep-line);
+}
+.eco-notice {
+  border-color: var(--ep-line);
+}
+.eco-notice small,
+.eco-notice time {
+  color: var(--ep-muted);
+}
+.eco-notice.is-unread {
+  background: var(--ep-primary-soft);
+}
+.eco-home-hero {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 20px;
+  padding: 28px;
+  border: 1px solid var(--ep-line);
+  border-radius: 18px;
+  background: var(--ep-surface);
+}
+.eco-home-hero h1 {
+  font-size: 30px;
+  font-weight: 650;
+  letter-spacing: -0.9px;
+  margin: 8px 0 10px;
+}
+.eco-home-hero p {
+  color: var(--ep-muted);
+  font-size: 13px;
+  line-height: 1.7;
+}
+.eco-home-stats .eco-card {
+  gap: 7px;
+  text-align: left;
+  color: var(--ep-text);
+  border-top: 3px solid var(--ep-primary);
+}
+.eco-home-stats .eco-card h2 {
+  font-size: 30px;
+  letter-spacing: -1px;
+  font-weight: 650;
+}
+.eco-home-stats .eco-card p {
+  font-size: 12px;
+  color: var(--ep-muted);
+}
+.eco-home-stats .eco-card:hover {
+  border-color: var(--ep-primary);
+}
+.eco-home-resources {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+.eco-home-resources .eco-link {
+  position: relative;
+  gap: 10px;
+  background: var(--ep-surface);
+}
+.eco-home-resources .eco-link > svg {
+  color: var(--ep-primary-ink);
+}
+.eco-home-resources .eco-link h2 {
+  font-size: 25px;
+  font-weight: 650;
+  letter-spacing: -0.7px;
+}
+.eco-home-resources .eco-link p {
+  font-size: 12px;
+  color: var(--ep-muted);
+  line-height: 1.7;
+}
+.eco-home-service {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 22px;
+  color: var(--ep-text);
+}
+.eco-home-service:hover {
+  border-color: var(--ep-primary);
+}
+.eco-home-service > div {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 7px;
+}
+.eco-home-service strong {
+  font-size: 15px;
+}
+.eco-home-service p,
+.eco-home-service small {
+  color: var(--ep-muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
+.eco-home-service > svg {
+  color: var(--ep-primary-ink);
+  flex-shrink: 0;
+}
+.portal-intro h1,
+.portal-service h1 {
+  font-size: 30px;
+  font-weight: 650;
+  letter-spacing: -0.9px;
+}
+.portal-search-filters {
+  border: 1px solid var(--ep-line);
+  border-radius: 12px;
+  background: var(--ep-surface);
+  padding: 0 18px;
+  margin: 0 0 20px;
+}
+.portal-search-filters summary {
+  padding: 17px 0;
+  font-size: 13px;
+  font-weight: 600;
+}
+.portal-search-filters summary > span {
+  color: var(--ep-muted);
+  font-size: 11px;
+  font-weight: 400;
+  margin-left: 12px;
+}
+.portal-search-filters > button {
+  margin-bottom: 18px;
+}
+.portal-search-filters .eco-filters {
+  padding-top: 5px;
+}
+.portal-order {
+  padding: 24px;
+  border-radius: 16px;
+  box-shadow: var(--zen-shadow);
+}
+.portal-order h2 {
+  font-size: 28px;
+  letter-spacing: -0.6px;
+  margin: 22px 0 8px;
+  font-weight: 650;
+}
+.portal-order-top > span {
+  font-size: 12px;
+}
+.portal-order-action {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 20px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ep-primary-ink);
+}
+.portal-step {
+  padding: 28px;
+  border-radius: 16px;
+}
+.portal-step-title {
+  margin-bottom: 24px;
+}
+.portal-step-title h2 {
+  font-size: 19px;
+  letter-spacing: -0.4px;
+  font-weight: 650;
+}
+.portal-step-title > span {
+  width: 36px;
+  height: 36px;
+  border-radius: 11px;
+}
+.portal-step-title p {
+  font-size: 13px;
+  line-height: 1.75;
+}
+.portal-service-summary {
+  border-top: 3px solid var(--ep-primary);
+}
+.portal-full-order {
+  width: 100%;
+}
+.portal-full-order summary {
+  color: var(--ep-primary-ink);
+  font-size: 13px;
+}
+.portal-service-summary .zc-notice {
+  margin: 0;
+  width: 100%;
+  flex-basis: 100%;
+}
+.portal-progress {
+  padding: 16px 18px;
+  border: 1px solid var(--ep-line);
+  border-radius: 14px;
+  background: var(--ep-surface);
+  gap: 16px;
+}
+.portal-progress span {
+  font-size: 12px;
+}
+.portal-progress button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  font-size: 12px;
+  color: var(--ep-muted);
+  background: transparent;
+  border: 0;
+  border-radius: 8px;
+  padding: 4px 6px;
+}
+.portal-progress button:hover {
+  background: var(--ep-subtle);
+  color: var(--ep-primary-ink);
+}
+.portal-step {
+  scroll-margin-top: 20px;
+}
+.portal-service .zc-field {
+  display: grid;
+  gap: 8px;
+  margin-block: 18px;
+}
+.portal-service .zc-field :is(input, textarea) {
+  display: block;
+  width: 100%;
+  min-height: 46px;
+  padding: 12px;
+  border: 1px solid var(--ep-line);
+  border-radius: 10px;
+  background: var(--ep-surface);
+  color: var(--ep-text);
+  font-size: 14px;
+}
+.portal-service .zc-field textarea {
+  min-height: 100px;
+  resize: vertical;
+}
+.portal-progress b {
+  width: 26px;
+  height: 26px;
+  font-size: 12px;
+}
+.portal-progress .is-complete b {
+  background: var(--ep-green-soft);
+  color: var(--ep-green-ink);
+}
+.portal-equipment-requirement {
+  border-radius: 12px;
+  padding: 20px;
+}
+.portal-equipment-requirement p {
+  margin: 9px 0;
+}
+.portal-file-buttons {
+  padding: 18px;
+  border: 1px dashed var(--ep-line);
+  border-radius: 13px;
+  background: var(--ep-subtle);
+}
+.portal-file-buttons label {
+  flex: 1;
+  justify-content: center;
+  min-height: 48px;
+  font-size: 14px;
+}
+.portal-submit-actions {
+  gap: 12px;
+}
+.portal-submit-actions .primary-button {
+  order: -1;
+}
+.portal-supervision {
+  border-radius: 14px;
+  font-size: 13px;
+  width: min(1104px, calc(100% - 56px));
+  padding: 18px 22px;
+}
+.portal-supervision p {
+  font-size: 12px;
+}
+.field-selector-main {
+  padding-top: 32px;
+}
+.field-selector-intro {
+  margin: 32px 0 28px;
+}
+.field-selector-intro > p:last-child {
+  font-size: 14px;
+}
+.field-technician-card {
+  padding: 25px;
+  border-radius: 16px;
+}
+.field-technician-card strong {
+  font-size: 15px;
+}
+.field-technician-card small {
+  font-size: 12px;
+}
+.field-selector-search {
+  min-height: 48px;
+  max-width: 100%;
+}
+.field-selector-search input {
+  font-size: 14px;
+}
+@media (max-width: 760px) {
+  .portal-main {
+    padding: 22px 18px 110px;
+  }
+  .portal-header {
+    padding: 17px 18px;
+    gap: 12px;
+  }
+  .portal-header .brand {
+    min-height: 0;
+  }
+  .portal-header-user {
+    gap: 4px;
+  }
+  .portal-header-user > span {
+    display: none;
+  }
+  .eco-nav {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 40;
+    margin: 0;
+    width: 100%;
+    border-radius: 0;
+    border-width: 1px 0 0;
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    padding: 6px 8px calc(7px + env(safe-area-inset-bottom));
+    gap: 3px;
+    box-shadow: 0 -4px 24px #07152c0a;
+  }
+  .eco-nav button {
+    min-width: 0;
+    min-height: 60px;
+    font-size: 10px;
+    line-height: 1.35;
+    padding: 7px 2px;
+    flex-direction: column;
+    justify-content: center;
+    white-space: normal;
+    gap: 6px;
+  }
+  .eco-nav button.is-active {
+    background: var(--ep-primary-soft);
+    color: var(--ep-primary-ink);
+    box-shadow: none;
+  }
+  .portal-app > .page-footer {
+    padding-bottom: 100px;
+  }
+  .field-selector-app > .page-footer {
+    padding-bottom: 16px;
+  }
+  .eco-home-hero {
+    padding: 23px;
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .eco-home-hero h1 {
+    font-size: 27px;
+  }
+  .eco-home-stats {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 9px;
+  }
+  .eco-home-stats .eco-card {
+    padding: 14px 10px;
+    border-radius: 12px;
+  }
+  .eco-home-stats .eco-card h2 {
+    font-size: 27px;
+  }
+  .eco-home-stats .eco-card p {
+    font-size: 10px;
+    line-height: 1.6;
+  }
+  .eco-home-resources {
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .eco-home-resources .eco-card {
+    padding: 17px;
+  }
+  .eco-home-resources .eco-link h2 {
+    font-size: 23px;
+  }
+  .eco-home-service {
+    padding: 20px;
+  }
+  .portal-step,
+  .portal-service-summary {
+    padding: 21px;
+  }
+  .portal-service .zc-field :is(input, textarea) {
+    font-size: 16px;
+  }
+  .portal-search-filters summary > span {
+    display: block;
+    margin: 7px 0 0 15px;
+  }
+  .eco-field input,
+  .eco-field select,
+  .eco-field textarea,
+  .field-selector-search input {
+    font-size: 16px;
+  }
+  .portal-tabs button {
+    flex: 1;
+    justify-content: center;
+  }
+  .portal-file-buttons {
+    display: grid;
+    gap: 12px;
+    padding: 14px;
+  }
+  .portal-supervision {
+    width: calc(100% - 36px);
+  }
+  .portal-service .zc-notice {
+    font-size: 13px;
+  }
+  .eco-home-resources .eco-link p {
+    font-size: 11px;
+  }
+}
+@media print {
+  .eco-nav {
+    display: none;
+  }
+  .portal-main {
+    padding-bottom: 0;
+  }
+}

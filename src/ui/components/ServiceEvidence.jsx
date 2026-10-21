@@ -2,12 +2,12 @@ import { useEffect, useState } from "react";
 import { ClipboardList } from "lucide-react";
 import { api } from "../lib/api";
 export const photoLabels = {
-  vehicle: "Veículo e identificação",
+  vehicle: "Foto do atendimento",
   label: "Etiqueta do equipamento",
-  installed: "Equipamento instalado",
-  service: "Serviço realizado",
-  other: "Foto complementar",
-  inspection: "Fotos da vistoria",
+  installed: "Foto do atendimento",
+  service: "Foto do atendimento",
+  other: "Foto do atendimento",
+  inspection: "Foto do atendimento",
   checklist: "Checklist assinado",
 };
 export function EvidencePhoto({ file, prefix = "/technician", children }) {
@@ -74,7 +74,12 @@ export function EvidencePhoto({ file, prefix = "/technician", children }) {
           </span>
         )}
         {file.equipment_model && <small>{file.equipment_model}</small>}
-        {file.serial_code && <code>{file.serial_code}</code>}
+        {file.serial_code && (
+          <code>
+            {file.equipment_type === "TAG" ? "Serial" : "IMEI/serial"}:{" "}
+            {file.serial_code}
+          </code>
+        )}
         {children}
       </div>
     </article>
