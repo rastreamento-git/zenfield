@@ -202,7 +202,9 @@ function Service({ id, onBack, onChanged, onOpenRelated }) {
     ["draft", "submitted", "approved_sync", "stock_failed"].includes(b.state),
   );
   const draft = batch?.state === "draft",
-    closed = ["CONCLUÍDO", "CANCELADO"].includes(order.status);
+    closed = ["CONCLUÍDO", "CANCELADO"].includes(order.status),
+    rescheduling =
+      order.status === "REAGENDAR" || order.visit_outcome === "reschedule";
   const rejected = submissions.find((b) => b.state === "rejected");
   const files = batch?.files || [],
     stale = draft && batch.order_version !== order.version;
@@ -250,7 +252,9 @@ function Service({ id, onBack, onChanged, onOpenRelated }) {
         );
       if (item.received > item.quantity)
         missing.push(
-          "Equipamento além do previsto: abra uma OS de equipamento adicional com a central.",
+          order.bundled_equipment
+            ? "Equipamento além da quantidade prevista: peça à central para atualizar a OS."
+            : "Equipamento além do previsto: abra uma OS de equipamento adicional com a central.",
         );
     }
   }
@@ -391,7 +395,7 @@ function Service({ id, onBack, onChanged, onOpenRelated }) {
                 <button
                   type="button"
                   className="secondary-button"
-                  disabled={busy || stale}
+                  disabled={busy || stale || rescheduling}
                   onClick={() => addFiles([row.file], kind, row.id)}
                 >
                   Tentar novamente
@@ -416,7 +420,7 @@ function Service({ id, onBack, onChanged, onOpenRelated }) {
             <EvidencePhoto key={f.id} file={f}>
               <button
                 className="secondary-button"
-                disabled={busy || stale}
+                disabled={busy || stale || rescheduling}
                 onClick={() =>
                   act(async () => {
                     await api.delete("/technician/photos/" + f.id, {
@@ -445,7 +449,8 @@ function Service({ id, onBack, onChanged, onOpenRelated }) {
           <p className="portal-eyebrow">{order.id}</p>
           <h1>{order.vehicle}</h1>
           <p>
-            {order.service} · {order.customer_name || "Associado"}
+            {order.service_label || order.service} ·{" "}
+            {order.customer_name || "Associado"}
           </p>
         </div>
         <Badge value={order.status} />
@@ -460,7 +465,7 @@ function Service({ id, onBack, onChanged, onOpenRelated }) {
             </p>
           </div>
         )}
-        {!!data.additional_orders?.length && (
+        {!!data.additional_orders?.length && !order.bundled_equipment && (
           <div className="zc-notice">
             <strong>Equipamentos adicionais deste atendimento</strong>
             <p>
@@ -482,6 +487,32 @@ function Service({ id, onBack, onChanged, onOpenRelated }) {
           </div>
         )}
 
+        {order.bundled_equipment && data.additional_orders?.length > 0 && (
+          <div className="zc-notice">
+            <b>Atendimento com equipamentos adicionais</b>
+            <p>
+              Envie todas as etiquetas e fotos neste registro. Os{" "}
+              {data.additional_orders.length} serviços adicionais serão
+              contabilizados junto com a instalação principal.
+            </p>
+          </div>
+        )}
+        {order.reuse_equipment && (
+          <div className="zc-notice">
+            <b>Reinstalação com reaproveitamento</b>
+            <p>
+              Fotografe os equipamentos existentes. A confirmação da central
+              registra o reaproveitamento sem retirar novos aparelhos da sua
+              carga.
+            </p>
+          </div>
+        )}
+        {rescheduling && (
+          <div className="zc-notice">
+            <b>Reagendamento solicitado</b>
+            <p>Aguarde a central confirmar a nova data do atendimento.</p>
+          </div>
+        )}
         {order.vehicle_electric && (
           <div className="zc-notice">
             <b>Veículo elétrico</b>
@@ -626,7 +657,7 @@ function Service({ id, onBack, onChanged, onOpenRelated }) {
             : "Atendimento cancelado."}
         </div>
       )}
-      {!batch && !closed && (
+      {!batch && !closed && !rescheduling && (
         <section className="dashboard-panel portal-step">
           <h2>Vamos registrar o serviço?</h2>
           <p>
@@ -724,7 +755,7 @@ function Service({ id, onBack, onChanged, onOpenRelated }) {
                 forem úteis para registrar o atendimento.
               </p>
               <FileButtons
-                disabled={busy || stale}
+                disabled={busy || stale || rescheduling}
                 onFiles={(files) => addFiles(files, "other")}
               />
               {uploadQueue("other")}
@@ -785,7 +816,7 @@ function Service({ id, onBack, onChanged, onOpenRelated }) {
                 correspondente.
               </p>
               <FileButtons
-                disabled={busy || stale}
+                disabled={busy || stale || rescheduling}
                 onFiles={(files) => addFiles(files, "label")}
               />
               {equipmentFeedback && (
@@ -846,7 +877,7 @@ function Service({ id, onBack, onChanged, onOpenRelated }) {
             </div>
             <FileButtons
               checklist
-              disabled={busy || stale}
+              disabled={busy || stale || rescheduling}
               onFiles={(files) => addFiles(files, "checklist")}
             />
             {uploadQueue("checklist")}
@@ -855,7 +886,7 @@ function Service({ id, onBack, onChanged, onOpenRelated }) {
               <input
                 type="checkbox"
                 checked={signed}
-                disabled={busy || stale}
+                disabled={busy || stale || rescheduling}
                 onChange={(e) => {
                   setSigned(e.target.checked);
                   setConfirmed(false);
@@ -886,7 +917,7 @@ function Service({ id, onBack, onChanged, onOpenRelated }) {
                   setExecutedOn(e.target.value);
                   setConfirmed(false);
                 }}
-                disabled={busy || stale}
+                disabled={busy || stale || rescheduling}
               />
             </label>
             <label className="zc-field zc-full">
@@ -897,7 +928,7 @@ function Service({ id, onBack, onChanged, onOpenRelated }) {
                 rows={3}
                 maxLength={6000}
                 value={notes}
-                disabled={busy || stale}
+                disabled={busy || stale || rescheduling}
                 onChange={(e) => {
                   setNotes(e.target.value);
                   setConfirmed(false);
@@ -972,7 +1003,7 @@ function Service({ id, onBack, onChanged, onOpenRelated }) {
               </button>
               <button
                 className="secondary-button"
-                disabled={busy || stale}
+                disabled={busy || stale || rescheduling}
                 onClick={() =>
                   act(async () => {
                     await api.patch("/technician/batches/" + batch.id, {
@@ -1392,7 +1423,7 @@ export default function TechnicianPortal({
                       <Badge value={o.group_status || o.status} />
                     </div>
                     <h2>{o.vehicle}</h2>
-                    <strong>{o.service}</strong>
+                    <strong>{o.service_label || o.service}</strong>
                     <p>{o.customer_name || "Associado"}</p>
                     {o.vehicle_electric && <p>Veículo elétrico</p>}
                     {o.additional_orders?.map((extra) => (

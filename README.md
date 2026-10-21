@@ -79,4 +79,6 @@ No PowerShell, defina `$env:VITE_API_URL='https://zencontrol.onrender.com'` ante
 
 O workflow incluído verifica as fontes e o build do ZenField sem baixar o ZenControl. Os testes do backend ficam no repositório da central. PDFs assinados são conferidos pelo operador; etiquetas precisam mostrar um código de barras ou QR Code legível.
 
-As observações do técnico são obrigatórias ao registrar a execução finalizada e ao enviar para conferência. O rascunho pode ser salvo incompleto. Equipamentos adicionais aparecem junto à OS principal na listagem, com acesso ao registro de cada instalação. O aviso de veículo elétrico orienta a confirmar a autorização do cliente; somente a central pode autorizar a dispensa de rastreador.
+As observações do técnico são obrigatórias ao registrar a execução finalizada e ao enviar para conferência. O rascunho pode ser salvo incompleto. Equipamentos adicionais aparecem junto à OS principal na listagem, com um único registro de fotos, checklist, observações e PDF para as novas OS com quantidades. Cada equipamento extra é contabilizado internamente. O aviso de veículo elétrico orienta a confirmar a autorização do cliente; somente a central pode autorizar a dispensa de rastreador.
+
+Reinstalações com reaproveitamento identificam aparelhos já instalados. A central confere essa condição e o Estoque Pro registra a reinstalação sem consumir novamente a carga. Reagendamentos aguardam a confirmação de nova data antes de abrir o registro de execução.
