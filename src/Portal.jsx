@@ -256,6 +256,7 @@ function Service({ id, onBack, onChanged, onOpenRelated }) {
   }
   if (needsChecklist && !signed)
     missing.push("Confirmar assinatura do checklist");
+  if (!notes.trim()) missing.push("Preencher as observações do técnico");
   async function addFiles(selected, kind, retryId = null) {
     if (uploading.current || !selected.length) return;
     if (files.length + selected.length > 30) {
@@ -461,8 +462,11 @@ function Service({ id, onBack, onChanged, onOpenRelated }) {
         )}
         {!!data.additional_orders?.length && (
           <div className="zc-notice">
-            <strong>OS de equipamento adicional vinculada</strong>
-            <p>Registre os equipamentos extras nos respectivos atendimentos.</p>
+            <strong>Equipamentos adicionais deste atendimento</strong>
+            <p>
+              Registre cada instalação abaixo para contabilizar os serviços
+              realizados.
+            </p>
             {data.additional_orders.map((extra) => (
               <button
                 className="secondary-button"
@@ -471,12 +475,22 @@ function Service({ id, onBack, onChanged, onOpenRelated }) {
                 key={extra.id}
                 onClick={() => onOpenRelated(extra.id)}
               >
-                Abrir OS adicional {extra.id} · {extra.additional_equipment}
+                Registrar equipamento adicional · {extra.additional_equipment} ·{" "}
+                {extra.status}
               </button>
             ))}
           </div>
         )}
 
+        {order.vehicle_electric && (
+          <div className="zc-notice">
+            <b>Veículo elétrico</b>
+            <p>
+              Confirme a autorização do cliente antes de instalar o rastreador.
+              Registre qualquer impedimento nas observações e informe a central.
+            </p>
+          </div>
+        )}
         {order.tracker_waiver_authorized && (
           <div className="zc-notice">
             <b>Dispensa de rastreador autorizada</b>
@@ -876,9 +890,10 @@ function Service({ id, onBack, onChanged, onOpenRelated }) {
               />
             </label>
             <label className="zc-field zc-full">
-              Observações do atendimento (opcional)
+              Observações do técnico (obrigatórias)
               <textarea
-                aria-label="Observações do atendimento (opcional)"
+                aria-label="Observações do técnico (obrigatórias)"
+                required
                 rows={3}
                 maxLength={6000}
                 value={notes}
@@ -923,6 +938,7 @@ function Service({ id, onBack, onChanged, onOpenRelated }) {
                     api.post("/technician/orders/" + order.id + "/finish", {
                       version: order.version,
                       executed_on: executedOn,
+                      notes,
                     }),
                   )
                 }
@@ -1083,10 +1099,7 @@ export default function TechnicianPortal({
     }, 30000);
     return () => clearInterval(timer);
   }, [selected]);
-  const list = (items || []).filter(
-    (o) =>
-      (filter === "closed") === ["CONCLUÍDO", "CANCELADO"].includes(o.status),
-  );
+  const list = items || [];
   async function logout() {
     try {
       await api.post("/auth/logout", {});
@@ -1215,7 +1228,10 @@ export default function TechnicianPortal({
           />
         ) : area === "home" ? (
           <Home
-            items={items || []}
+            items={(items || []).map((o) => ({
+              ...o,
+              status: o.group_status || o.status,
+            }))}
             loading={!items}
             name={me?.name || user.nome}
             onOpen={(id) => {
@@ -1373,11 +1389,20 @@ export default function TechnicianPortal({
                   >
                     <div className="portal-order-top">
                       <span>{o.id}</span>
-                      <Badge value={o.status} />
+                      <Badge value={o.group_status || o.status} />
                     </div>
                     <h2>{o.vehicle}</h2>
                     <strong>{o.service}</strong>
                     <p>{o.customer_name || "Associado"}</p>
+                    {o.vehicle_electric && <p>Veículo elétrico</p>}
+                    {o.additional_orders?.map((extra) => (
+                      <p key={extra.id}>
+                        + {extra.additional_equipment} · {extra.status}
+                      </p>
+                    ))}
+                    {!!o.group_imeis?.length && (
+                      <p>IMEI/serial: {o.group_imeis.join(" · ")}</p>
+                    )}
                     <div className="portal-order-bottom">
                       <span>
                         <MapPin size={14} />

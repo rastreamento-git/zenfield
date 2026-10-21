@@ -78,3 +78,5 @@ VITE_API_URL=https://zencontrol.onrender.com npm run build
 No PowerShell, defina `$env:VITE_API_URL='https://zencontrol.onrender.com'` antes de executar `npm run build`.
 
 O workflow incluído verifica as fontes e o build do ZenField sem baixar o ZenControl. Os testes do backend ficam no repositório da central. PDFs assinados são conferidos pelo operador; etiquetas precisam mostrar um código de barras ou QR Code legível.
+
+As observações do técnico são obrigatórias ao registrar a execução finalizada e ao enviar para conferência. O rascunho pode ser salvo incompleto. Equipamentos adicionais aparecem junto à OS principal na listagem, com acesso ao registro de cada instalação. O aviso de veículo elétrico orienta a confirmar a autorização do cliente; somente a central pode autorizar a dispensa de rastreador.
