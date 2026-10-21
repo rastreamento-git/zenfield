@@ -5,7 +5,14 @@ import {
   passwordInputProps,
   passwordRequirements,
 } from "./ui/lib/password-policy";
-import { NoticeBell, Home, Stock, FinancePanel, Rates } from "./Ecosystem";
+import {
+  NoticeBell,
+  Home,
+  Stock,
+  FinancePanel,
+  Rates,
+  NewRequest,
+} from "./Ecosystem";
 import { useEffect, useRef, useState } from "react";
 import {
   Activity,
@@ -533,6 +540,15 @@ function Service({ id, onBack, onChanged, onOpenRelated }) {
             </p>
           </div>
         )}
+        <div className="zc-notice">
+          Taxa de deslocamento definida pela central:{" "}
+          <b>
+            {((order.travel_fee_cents || 0) / 100).toLocaleString("pt-BR", {
+              style: "currency",
+              currency: "BRL",
+            })}
+          </b>
+        </div>
         <dl>
           <div>
             <dt>Agendamento</dt>
@@ -607,6 +623,20 @@ function Service({ id, onBack, onChanged, onOpenRelated }) {
           <Download size={16} />
           Baixar OS em PDF
         </button>
+        {!order.parent_order_id &&
+          !order.tracker_waiver_authorized &&
+          order.status !== "CANCELADO" && (
+            <div style={{ marginTop: 16 }}>
+              <NewRequest
+                key={order.id}
+                kind="expense"
+                initialOrderId={order.id}
+                onSaved={() =>
+                  notify("Despesa enviada para conferência da central.")
+                }
+              />
+            </div>
+          )}
       </section>
       {error && (
         <div className="error-banner" role="alert">
