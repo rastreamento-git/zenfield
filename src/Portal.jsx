@@ -10,6 +10,7 @@ import { useEffect, useRef, useState } from "react";
 import {
   Activity,
   ArrowLeft,
+  ArrowRight,
   Camera,
   CheckCheck,
   ClipboardList,
@@ -502,7 +503,7 @@ function Service({ id, onBack, onChanged, onOpenRelated }) {
           </div>
         </dl>
         {doc && (
-          <details className="portal-full-order" open>
+          <details className="portal-full-order">
             <summary>Ordem de serviço completa</summary>
             <img
               className="zen-order-logo"
@@ -645,18 +646,53 @@ function Service({ id, onBack, onChanged, onOpenRelated }) {
           )}
           <div className="portal-progress" aria-label="Etapas do registro">
             {[
-              "Fotos (opcional)",
-              ...(install ? ["Equipamentos"] : []),
-              "Checklist",
-              "Enviar",
-            ].map((step, i) => (
-              <span key={step}>
-                <b>{i + 1}</b>
+              ["Fotos (opcional)", "service-photos", generalFiles.length > 0],
+              ...(install
+                ? [
+                    [
+                      "Equipamentos",
+                      "service-equipment",
+                      equipmentPlan.every(
+                        (item) => item.received === item.quantity,
+                      ),
+                    ],
+                  ]
+                : []),
+              [
+                "Checklist",
+                "service-checklist",
+                signed && files.some((f) => f.kind === "checklist"),
+              ],
+              ["Enviar", "service-submit", false],
+            ].map(([step, target, complete], i) => (
+              <button
+                key={step}
+                type="button"
+                className={complete ? "is-complete" : ""}
+                onClick={() => {
+                  const section = document.getElementById(target);
+                  section?.scrollIntoView({
+                    behavior: window.matchMedia(
+                      "(prefers-reduced-motion: reduce)",
+                    ).matches
+                      ? "auto"
+                      : "smooth",
+                    block: "start",
+                  });
+                  section?.focus({ preventScroll: true });
+                }}
+                aria-label={`${step}${complete ? " · Recebido" : ""}`}
+              >
+                <b>{complete ? <CheckCheck size={14} /> : i + 1}</b>
                 {step}
-              </span>
+              </button>
             ))}
           </div>
-          <section className="dashboard-panel portal-step">
+          <section
+            className="dashboard-panel portal-step"
+            id="service-photos"
+            tabIndex={-1}
+          >
             <div className="portal-step-title">
               <span>1</span>
               <div>
@@ -682,18 +718,20 @@ function Service({ id, onBack, onChanged, onOpenRelated }) {
             </div>
           </section>
           {install && (
-            <section className="dashboard-panel portal-step">
+            <section
+              className="dashboard-panel portal-step"
+              id="service-equipment"
+              tabIndex={-1}
+            >
               <div className="portal-step-title">
                 <span>2</span>
                 <div>
                   <h2>Equipamentos previstos nesta OS</h2>
                   <p>
-                    Selecione várias fotos, uma por equipamento, mostrando toda
-                    a etiqueta com o código de barras ou QR Code. O leitor
-                    identifica o IMEI do rastreador ou o serial da TAG e confere
-                    com sua carga no EstoquePro. Se a leitura falhar ou o código
-                    não corresponder, avisaremos aqui e a foto não será aceita
-                    como equipamento identificado.
+                    Envie uma foto nítida da etiqueta de cada equipamento. A
+                    leitura do código de barras ou QR Code identifica o IMEI ou
+                    serial e confere sua carga automaticamente. Você será
+                    avisado se a leitura falhar.
                   </p>
                 </div>
               </div>
@@ -777,7 +815,11 @@ function Service({ id, onBack, onChanged, onOpenRelated }) {
               )}
             </section>
           )}
-          <section className="dashboard-panel portal-step">
+          <section
+            className="dashboard-panel portal-step"
+            id="service-checklist"
+            tabIndex={-1}
+          >
             <div className="portal-step-title">
               <span>{install ? 3 : 2}</span>
               <div>
@@ -808,7 +850,11 @@ function Service({ id, onBack, onChanged, onOpenRelated }) {
               O checklist anexado está preenchido e assinado.
             </label>
           </section>
-          <section className="dashboard-panel portal-step">
+          <section
+            className="dashboard-panel portal-step"
+            id="service-submit"
+            tabIndex={-1}
+          >
             <div className="portal-step-title">
               <span>{install ? 4 : 3}</span>
               <div>
@@ -1055,6 +1101,9 @@ export default function TechnicianPortal({
   }
   return (
     <div className="inventory-app portal-app">
+      <a className="skip-link" href="#field-content">
+        Ir para o conteúdo
+      </a>
       <header className="portal-header">
         <div className="brand">
           <span className="brand-mark">
@@ -1133,7 +1182,7 @@ export default function TechnicianPortal({
           </div>
         </section>
       )}
-      <main className="portal-main">
+      <main className="portal-main" id="field-content" tabIndex={-1}>
         <nav className="eco-nav" aria-label="Áreas do portal">
           {[
             ["home", "Início", Activity],
@@ -1145,6 +1194,7 @@ export default function TechnicianPortal({
             <button
               key={key}
               className={area === key ? "is-active" : ""}
+              aria-current={area === key ? "page" : undefined}
               onClick={() => {
                 setArea(key);
                 setSelected(null);
@@ -1166,11 +1216,27 @@ export default function TechnicianPortal({
         ) : area === "home" ? (
           <Home
             items={items || []}
+            loading={!items}
+            name={me?.name || user.nome}
             onOpen={(id) => {
               setArea("services");
               setSelected(id);
             }}
-            onNavigate={setArea}
+            onNavigate={(next, view, status) => {
+              setArea(next);
+              if (next === "services") {
+                setFilter(view || "open");
+                setCriteria({
+                  q: "",
+                  vehicle: "",
+                  service: "",
+                  status: status || "",
+                  from: "",
+                  to: "",
+                });
+                setPage(1);
+              }
+            }}
           />
         ) : area === "stock" ? (
           <Stock />
@@ -1216,28 +1282,56 @@ export default function TechnicianPortal({
                 Finalizados
               </button>
             </div>
-            <div className="eco-filters">
-              {[
-                ["q", "Número da OS"],
-                ["vehicle", "Veículo"],
-                ["service", "Tipo de serviço"],
-                ["status", "Situação"],
-                ["from", "De"],
-                ["to", "Até"],
-              ].map(([key, label]) => (
-                <label className="eco-field" key={key}>
-                  {label}
-                  <input
-                    type={["from", "to"].includes(key) ? "date" : "search"}
-                    value={criteria[key]}
-                    onChange={(e) => {
-                      setCriteria({ ...criteria, [key]: e.target.value });
-                      setPage(1);
-                    }}
-                  />
-                </label>
-              ))}
-            </div>
+            <details className="portal-search-filters">
+              <summary>
+                Filtrar serviços{" "}
+                {Object.values(criteria).some(Boolean) && (
+                  <b>
+                    · {Object.values(criteria).filter(Boolean).length} ativo(s)
+                  </b>
+                )}{" "}
+                <span>OS, veículo, situação ou período</span>
+              </summary>
+              <div className="eco-filters">
+                {[
+                  ["q", "Número da OS"],
+                  ["vehicle", "Veículo"],
+                  ["service", "Tipo de serviço"],
+                  ["status", "Situação"],
+                  ["from", "De"],
+                  ["to", "Até"],
+                ].map(([key, label]) => (
+                  <label className="eco-field" key={key}>
+                    {label}
+                    <input
+                      type={["from", "to"].includes(key) ? "date" : "search"}
+                      value={criteria[key]}
+                      onChange={(e) => {
+                        setCriteria({ ...criteria, [key]: e.target.value });
+                        setPage(1);
+                      }}
+                    />
+                  </label>
+                ))}
+              </div>
+              <button
+                className="secondary-button"
+                type="button"
+                onClick={() => {
+                  setCriteria({
+                    q: "",
+                    vehicle: "",
+                    service: "",
+                    status: "",
+                    from: "",
+                    to: "",
+                  });
+                  setPage(1);
+                }}
+              >
+                Limpar filtros
+              </button>
+            </details>
             <div className="eco-row">
               <button
                 className="secondary-button"
@@ -1291,6 +1385,9 @@ export default function TechnicianPortal({
                       </span>
                       <span>{format(o.scheduled_at, true)}</span>
                     </div>
+                    <span className="portal-order-action">
+                      Abrir atendimento <ArrowRight size={16} />
+                    </span>
                   </button>
                 ))}
               </div>

@@ -7,6 +7,7 @@ import {
   Package,
   Wallet,
   CalendarDays,
+  ArrowRight,
 } from "lucide-react";
 import { api, errorMessage } from "@zenfield/ui/lib/api";
 import "./ecosystem.css";
@@ -1420,75 +1421,116 @@ export function FinancePanel({ technical = false }) {
     </section>
   );
 }
-export function Home({ items, onOpen, onNavigate }) {
+export function Home({ items, onOpen, onNavigate, name, loading }) {
   const state = useData("/technician/finance"),
     stockState = useData("/technician/stock"),
     open = items.filter((o) => !["CONCLUÍDO", "CANCELADO"].includes(o.status));
   return (
     <section className="eco-section">
-      <h1>Seu dia em campo</h1>
-      <p>
-        Confira seus próximos serviços e acompanhe as confirmações da central.
-      </p>
-      <div className="eco-grid">
+      <div className="eco-home-hero">
+        <div>
+          <span className="eyebrow">ZENFIELD · SUA ÁREA DE TRABALHO</span>
+          <h1>Seu dia em campo</h1>
+          <p>
+            Olá, {name?.split(" ")[0] || "bem-vindo"}. Confira os serviços e o
+            que precisa da sua atenção.
+          </p>
+        </div>
+        <button
+          className="primary-button"
+          onClick={() => onNavigate("services", "open")}
+        >
+          Ver meus serviços <ArrowRight size={17} />
+        </button>
+      </div>
+      <div className="eco-grid eco-home-stats">
         {[
-          ["Em atendimento", open.length],
+          ["Em atendimento", open.length, "open"],
           [
             "Concluídos nesta lista",
             items.filter((o) => o.status === "CONCLUÍDO").length,
+            "closed",
           ],
           [
             "Pendências de correção",
             items.filter((o) => o.status === "CORREÇÃO SOLICITADA").length,
+            "open",
+            "CORREÇÃO SOLICITADA",
           ],
-        ].map(([title, n]) => (
-          <article className="dashboard-panel eco-card" key={title}>
-            <h2>{n}</h2>
+        ].map(([title, n, view, status]) => (
+          <button
+            className="dashboard-panel eco-card"
+            key={title}
+            disabled={loading}
+            onClick={() => onNavigate("services", view, status)}
+          >
+            <h2>{loading ? "—" : n}</h2>
             <p>{title}</p>
-          </article>
+          </button>
         ))}
       </div>
       <Loader state={state} />
-      {state.data && (
+      <div className="eco-home-resources">
+        {state.data && (
+          <button
+            className="dashboard-panel eco-card eco-link"
+            onClick={() => onNavigate("finance")}
+          >
+            <Wallet />
+            <h2>
+              {brl(state.data.estimated_cents + state.data.confirmed_cents)}
+            </h2>
+            <p>
+              Previsão de serviços ainda sem fechamento · consultar financeiro
+            </p>
+          </button>
+        )}
         <button
           className="dashboard-panel eco-card eco-link"
-          onClick={() => onNavigate("finance")}
+          onClick={() => onNavigate("stock")}
         >
-          <Wallet />
-          <h2>
-            {brl(state.data.estimated_cents + state.data.confirmed_cents)}
-          </h2>
-          <p>
-            Previsão de serviços ainda sem fechamento · consultar financeiro
-          </p>
+          <Package size={24} />
+          <h2>{stockState.data?.items.length ?? "—"}</h2>
+          <p>Equipamentos em carga · consultar meu estoque</p>
+          <Loader state={stockState} />
         </button>
-      )}
-      <article className="dashboard-panel eco-card">
-        <h2>{stockState.data?.items.length ?? "—"}</h2>
-        <p>Equipamentos em carga individual</p>
-        <Loader state={stockState} />
-      </article>
+      </div>
       <h2>Próximos serviços</h2>
+      {loading && <p role="status">Carregando seus atendimentos…</p>}
+      {!loading && !open.length && (
+        <div className="eco-info">
+          Nenhum serviço em aberto nesta lista. Os novos agendamentos aparecerão
+          aqui.
+        </div>
+      )}
       {open.slice(0, 5).map((o) => (
         <button
-          className="dashboard-panel eco-card eco-link"
+          className="dashboard-panel eco-home-service eco-link"
           key={o.id}
           onClick={() => onOpen(o.id)}
         >
-          <strong>
-            {o.vehicle} · {o.service}
-          </strong>
-          <p>
-            {o.scheduled_at?.replace("T", " ")} · {o.location}
-          </p>
-          <small>
-            {o.id} · {o.status}
-          </small>
+          <div>
+            <strong>
+              {o.vehicle} · {o.service}
+            </strong>
+            <p>
+              {o.scheduled_at
+                ? new Date(o.scheduled_at).toLocaleString("pt-BR", {
+                    day: "2-digit",
+                    month: "2-digit",
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })
+                : "Horário a confirmar"}{" "}
+              · {o.location || "Local a confirmar"}
+            </p>
+            <small>
+              {o.id} · {o.status}
+            </small>
+          </div>
+          <ArrowRight size={20} />
         </button>
       ))}
-      <button className="primary-button" onClick={() => onNavigate("stock")}>
-        <Package size={18} /> Consultar meu estoque
-      </button>
     </section>
   );
 }

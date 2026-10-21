@@ -8,6 +8,8 @@ import AuthGate from "@zenfield/ui/components/AuthGate";
 import Feedback from "@zenfield/ui/components/Feedback";
 import FieldEntry from "./FieldEntry";
 import "@zenfield/ui/styles/appearance.css";
+import "@zenfield/ui/styles/experience.css";
+import "./field-experience.css";
 initializeAppearance();
 createRoot(document.getElementById("root")).render(
   <StrictMode>
