@@ -982,6 +982,25 @@ export function FinancePanel({ technical = false }) {
       setPreview(null);
     }
   }, [data]);
+  useEffect(() => {
+    if (technical || !tid) return;
+    const controller = new AbortController();
+    api
+      .get("/finance-v2/technicians/" + tid + "/rates", {
+        signal: controller.signal,
+      })
+      .then((r) => {
+        if (!controller.signal.aborted)
+          setRatePrices(
+            r.data.items.find((x) => x.effective_on <= today())?.prices ||
+              Object.fromEntries(services.map((s) => [s, 0])),
+          );
+      })
+      .catch((e) => {
+        if (!controller.signal.aborted) setError(errorMessage(e));
+      });
+    return () => controller.abort();
+  }, [technical, tid]);
   async function act(fn) {
     setBusy(true);
     setError("");
@@ -997,15 +1016,22 @@ export function FinancePanel({ technical = false }) {
   function changeTech(id) {
     setTid(id);
     setRatePrices(null);
-    api
-      .get("/finance-v2/technicians/" + id + "/rates")
-      .then((r) =>
-        setRatePrices(
-          r.data.items.find((x) => x.effective_on <= today())?.prices ||
-            Object.fromEntries(services.map((s) => [s, 0])),
-        ),
-      )
-      .catch((e) => setError(errorMessage(e)));
+    setPolicy(null);
+    setPreview(null);
+    setPay(null);
+    setAmount("");
+    setReference("");
+    setReceipt("");
+    setExtra(false);
+    setReason("");
+    setError("");
+    setStart("");
+    setEnd(today());
+    setRateDate(today());
+    setPaidOn(today());
+    setHoliday({ day: "", name: "" });
+    closeKey.current = crypto.randomUUID();
+    paymentKey.current = crypto.randomUUID();
   }
   return (
     <section className="eco-section">
@@ -1016,7 +1042,11 @@ export function FinancePanel({ technical = false }) {
       </p>
       {!technical && (
         <Field label="Técnico">
-          <select value={tid} onChange={(e) => changeTech(e.target.value)}>
+          <select
+            value={tid}
+            disabled={busy}
+            onChange={(e) => changeTech(e.target.value)}
+          >
             <option value="">Selecione um técnico</option>
             {techs.data?.items?.map((t) => (
               <option value={t.id} key={t.id}>
@@ -1624,7 +1654,8 @@ export function FinancePanel({ technical = false }) {
     </section>
   );
 }
-export function Home({ items, onOpen, onNavigate, name, loading }) {
+
+export function Home({ items, onOpen, onNavigate, name, loading, error }) {
   const state = useData("/technician/finance"),
     stockState = useData("/technician/stock"),
     open = items.filter((o) => !["CONCLUÍDO", "CANCELADO"].includes(o.status));
@@ -1664,10 +1695,10 @@ export function Home({ items, onOpen, onNavigate, name, loading }) {
           <button
             className="dashboard-panel eco-card"
             key={title}
-            disabled={loading}
+            disabled={loading || !!error}
             onClick={() => onNavigate("services", view, status)}
           >
-            <h2>{loading ? "—" : n}</h2>
+            <h2>{loading || error ? "—" : n}</h2>
             <p>{title}</p>
           </button>
         ))}
@@ -1700,40 +1731,42 @@ export function Home({ items, onOpen, onNavigate, name, loading }) {
       </div>
       <h2>Próximos serviços</h2>
       {loading && <p role="status">Carregando seus atendimentos…</p>}
-      {!loading && !open.length && (
+      {!loading && !error && !open.length && (
         <div className="eco-info">
           Nenhum serviço em aberto nesta lista. Os novos agendamentos aparecerão
           aqui.
         </div>
       )}
-      {open.slice(0, 5).map((o) => (
-        <button
-          className="dashboard-panel eco-home-service eco-link"
-          key={o.id}
-          onClick={() => onOpen(o.id)}
-        >
-          <div>
-            <strong>
-              {o.vehicle} · {o.service}
-            </strong>
-            <p>
-              {o.scheduled_at
-                ? new Date(o.scheduled_at).toLocaleString("pt-BR", {
-                    day: "2-digit",
-                    month: "2-digit",
-                    hour: "2-digit",
-                    minute: "2-digit",
-                  })
-                : "Horário a confirmar"}{" "}
-              · {o.location || "Local a confirmar"}
-            </p>
-            <small>
-              {o.id} · {o.status}
-            </small>
-          </div>
-          <ArrowRight size={20} />
-        </button>
-      ))}
+      {!loading &&
+        !error &&
+        open.slice(0, 5).map((o) => (
+          <button
+            className="dashboard-panel eco-home-service eco-link"
+            key={o.id}
+            onClick={() => onOpen(o.id)}
+          >
+            <div>
+              <strong>
+                {o.vehicle} · {o.service}
+              </strong>
+              <p>
+                {o.scheduled_at
+                  ? new Date(o.scheduled_at).toLocaleString("pt-BR", {
+                      day: "2-digit",
+                      month: "2-digit",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })
+                  : "Horário a confirmar"}{" "}
+                · {o.location || "Local a confirmar"}
+              </p>
+              <small>
+                {o.id} · {o.status}
+              </small>
+            </div>
+            <ArrowRight size={20} />
+          </button>
+        ))}
     </section>
   );
 }
