@@ -10,6 +10,7 @@ import FieldEntry from "./FieldEntry";
 import "@zenfield/ui/styles/appearance.css";
 import "@zenfield/ui/styles/experience.css";
 import "./field-experience.css";
+import "@zenfield/ui/styles/engagement.css";
 initializeAppearance();
 createRoot(document.getElementById("root")).render(
   <StrictMode>

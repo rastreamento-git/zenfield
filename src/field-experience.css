@@ -4,6 +4,37 @@
   color: var(--ep-text);
   font-size: 22px;
 }
+.portal-app .portal-chat-exit {
+  display: none;
+}
+@media (max-width: 620px) {
+  .portal-app .portal-areas {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+    overflow: visible;
+  }
+  .portal-app .portal-areas button {
+    min-width: 0;
+    padding: 9px 5px;
+    flex-direction: column;
+    justify-content: center;
+    gap: 4px;
+    font-size: 11px;
+    text-align: center;
+    white-space: normal;
+  }
+  .portal-app.portal-chat-mode .portal-areas {
+    display: none;
+  }
+  .portal-app.portal-chat-mode .portal-main {
+    padding-bottom: 24px;
+  }
+  .portal-app.portal-chat-mode .portal-chat-exit {
+    display: inline-flex;
+    margin-bottom: 12px;
+  }
+}
 .portal-app .brand small {
   color: var(--ep-muted);
   font-size: 11px;

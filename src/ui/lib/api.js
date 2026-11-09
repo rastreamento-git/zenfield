@@ -21,6 +21,7 @@ export function saveToken(token) {
     technicianContext = null;
   }
 }
+export const sessionToken = () => sessionStorage.getItem(TOKEN_KEY);
 
 export function errorMessage(error) {
   if (error.code === "INVENT_BUSY") return "Aguarde a operação em andamento.";
