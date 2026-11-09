@@ -1184,7 +1184,7 @@ export default function TechnicianPortal({
   return (
     <div
       className={
-        "inventory-app portal-app" +
+        "inventory-app portal-app zen-shell zen-shell-field" +
         (area === "chat" ? " portal-chat-mode" : "")
       }
     >
