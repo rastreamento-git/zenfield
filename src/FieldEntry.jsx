@@ -1,6 +1,7 @@
 import { appearanceUrl } from "./ui/lib/appearance";
 import ThemeControl from "./ui/components/ThemeControl";
 import ZenMark from "./ui/components/ZenMark";
+import ProfileButton from "./ui/components/ProfileButton";
 import { useEffect, useState } from "react";
 import {
   ArrowLeft,
@@ -105,6 +106,7 @@ export default function FieldEntry() {
         </div>
         <div className="field-selector-account">
           <ThemeControl />
+          <ProfileButton compact />
           <span>{user.nome}</span>
         </div>
       </header>

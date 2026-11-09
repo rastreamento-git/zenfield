@@ -1,6 +1,8 @@
 import { appearanceUrl } from "./ui/lib/appearance";
 import ThemeControl from "./ui/components/ThemeControl";
 import ZenMark from "./ui/components/ZenMark";
+import ProfileButton from "./ui/components/ProfileButton";
+import Chat from "./ui/components/Chat";
 import {
   passwordInputProps,
   passwordRequirements,
@@ -23,12 +25,12 @@ import {
   ClipboardList,
   Download,
   LogOut,
+  MessageCircle,
   MapPin,
   RefreshCw,
   Send,
   Trash2,
   Package,
-  KeyRound,
   Wallet,
   CircleDollarSign,
 } from "lucide-react";
@@ -1180,7 +1182,12 @@ export default function TechnicianPortal({
     );
   }
   return (
-    <div className="inventory-app portal-app">
+    <div
+      className={
+        "inventory-app portal-app" +
+        (area === "chat" ? " portal-chat-mode" : "")
+      }
+    >
       <a className="skip-link" href="#field-content">
         Ir para o conteúdo
       </a>
@@ -1198,7 +1205,7 @@ export default function TechnicianPortal({
         </div>
         <div className="portal-header-user">
           <ThemeControl />
-          <span>{me?.name || user.nome}</span>
+          <span>{supervision?.name || user.nome}</span>
           <NoticeBell
             onOpen={(n) => {
               if (n.detail.order_id) {
@@ -1214,13 +1221,7 @@ export default function TechnicianPortal({
               }
             }}
           />
-          <button
-            className="icon-button"
-            aria-label={supervision ? "Alterar minha senha" : "Alterar senha"}
-            onClick={() => setPassword(true)}
-          >
-            <KeyRound size={18} />
-          </button>
+          <ProfileButton compact onPassword={() => setPassword(true)} />
           <button className="icon-button" aria-label="Sair" onClick={logout}>
             <LogOut size={19} />
           </button>
@@ -1263,10 +1264,13 @@ export default function TechnicianPortal({
         </section>
       )}
       <main className="portal-main" id="field-content" tabIndex={-1}>
-        <nav className="eco-nav" aria-label="Áreas do portal">
+        <nav className="eco-nav portal-areas" aria-label="Áreas do portal">
           {[
             ["home", "Início", Activity],
             ["services", "Meus serviços", ClipboardList],
+            ...(!supervision
+              ? [["chat", "Chat com a central", MessageCircle]]
+              : []),
             ["stock", "Meu estoque", Package],
             ["finance", "Meu financeiro", Wallet],
             ["rates", "Meus valores", CircleDollarSign],
@@ -1314,7 +1318,7 @@ export default function TechnicianPortal({
             }))}
             loading={loading}
             error={error}
-            name={me?.name || user.nome}
+            name={supervision?.name || user.nome || me?.name}
             onOpen={(id) => {
               setArea("services");
               setSelected(id);
@@ -1335,6 +1339,17 @@ export default function TechnicianPortal({
               }
             }}
           />
+        ) : area === "chat" && !supervision ? (
+          <>
+            <button
+              type="button"
+              className="secondary-button portal-chat-exit"
+              onClick={() => setArea("home")}
+            >
+              <ArrowLeft size={17} /> Voltar ao início
+            </button>
+            <Chat />
+          </>
         ) : area === "stock" ? (
           <Stock />
         ) : area === "finance" ? (
