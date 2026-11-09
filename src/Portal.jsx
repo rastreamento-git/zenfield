@@ -841,9 +841,9 @@ function Service({ id, onBack, onChanged, onOpenRelated }) {
                   ))}
               </div>
               <p className="zc-muted">
-                Equipamentos extras têm uma OS de equipamento adicional, com
-                atendimento e remuneração próprios. Envie cada etiqueta na OS
-                correspondente.
+                {order.bundled_equipment
+                  ? "Envie aqui as etiquetas de todos os equipamentos previstos. Os equipamentos adicionais ficam juntos neste atendimento e são contabilizados individualmente."
+                  : "Equipamentos extras têm uma OS adicional vinculada. Confira com a central em qual atendimento registrar cada etiqueta."}
               </p>
               <FileButtons
                 disabled={busy || stale || rescheduling}
@@ -1104,6 +1104,7 @@ export default function TechnicianPortal({
     [items, setItems] = useState(null),
     [me, setMe] = useState(null),
     [error, setError] = useState(""),
+    [loading, setLoading] = useState(true),
     [selected, setSelected] = useState(null),
     [revision, setRevision] = useState(0),
     [filter, setFilter] = useState("open"),
@@ -1125,14 +1126,16 @@ export default function TechnicianPortal({
     return () => clearTimeout(timer);
   }, [criteria]);
   useEffect(() => {
+    if (!["home", "services"].includes(area)) return;
     let active = true;
+    setLoading(true);
     Promise.all([
       api.get("/technician/me"),
       api.get(
         "/technician/orders?" +
           new URLSearchParams({
-            ...searchCriteria,
-            page,
+            ...(area === "services" ? searchCriteria : {}),
+            page: area === "services" ? page : 1,
             limit: 100,
             view: area === "services" ? filter : "",
           }),
@@ -1148,6 +1151,9 @@ export default function TechnicianPortal({
       })
       .catch((e) => {
         if (active) setError(errorMessage(e));
+      })
+      .finally(() => {
+        if (active) setLoading(false);
       });
     return () => {
       active = false;
@@ -1279,6 +1285,19 @@ export default function TechnicianPortal({
             </button>
           ))}
         </nav>
+        {!selected && ["home", "services"].includes(area) && error && (
+          <div className="error-banner" role="alert">
+            <p>{error}</p>
+            <button
+              type="button"
+              className="secondary-button"
+              disabled={loading}
+              onClick={() => setRevision((r) => r + 1)}
+            >
+              Tentar novamente
+            </button>
+          </div>
+        )}
         {selected ? (
           <Service
             key={selected}
@@ -1293,7 +1312,8 @@ export default function TechnicianPortal({
               ...o,
               status: o.group_status || o.status,
             }))}
-            loading={!items}
+            loading={loading}
+            error={error}
             name={me?.name || user.nome}
             onOpen={(id) => {
               setArea("services");
@@ -1428,14 +1448,9 @@ export default function TechnicianPortal({
                 Próxima
               </button>
             </div>
-            {error && (
-              <div className="error-banner" role="alert">
-                {error}
-              </div>
-            )}
-            {!items ? (
-              <Loading error={error} />
-            ) : !list.length ? (
+            {loading ? (
+              <Loading />
+            ) : error ? null : !list.length ? (
               <Empty
                 title="Nenhum serviço nesta lista"
                 description="Os atendimentos atribuídos a você aparecerão aqui."
