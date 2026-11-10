@@ -91,7 +91,7 @@ export default function FieldEntry() {
       />
     );
   return (
-    <div className="inventory-app portal-app field-selector-app">
+    <div className="inventory-app portal-app field-selector-app zen-shell zen-shell-field">
       <header className="portal-header">
         <div className="brand">
           <span className="brand-mark">

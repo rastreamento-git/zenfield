@@ -11,6 +11,7 @@ import "@zenfield/ui/styles/appearance.css";
 import "@zenfield/ui/styles/experience.css";
 import "./field-experience.css";
 import "@zenfield/ui/styles/engagement.css";
+import "@zenfield/ui/styles/signal-theme.css";
 initializeAppearance();
 createRoot(document.getElementById("root")).render(
   <StrictMode>
