@@ -32,7 +32,6 @@ import {
   Trash2,
   Package,
   Wallet,
-  CircleDollarSign,
 } from "lucide-react";
 import { api, errorMessage, saveToken } from "@zenfield/ui/lib/api";
 import { useSession } from "@zenfield/ui/lib/session";
@@ -1104,7 +1103,6 @@ export default function TechnicianPortal({
 }) {
   const user = useSession(),
     [items, setItems] = useState(null),
-    [me, setMe] = useState(null),
     [error, setError] = useState(""),
     [loading, setLoading] = useState(true),
     [selected, setSelected] = useState(null),
@@ -1133,9 +1131,8 @@ export default function TechnicianPortal({
     if (!["home", "services"].includes(area)) return;
     let active = true;
     setLoading(true);
-    Promise.all([
-      api.get("/technician/me"),
-      api.get(
+    api
+      .get(
         "/technician/orders?" +
           new URLSearchParams({
             ...(area === "services" ? searchCriteria : {}),
@@ -1143,13 +1140,11 @@ export default function TechnicianPortal({
             limit: 100,
             view: area === "services" ? filter : "",
           }),
-      ),
-    ])
-      .then(([m, r]) => {
+      )
+      .then(({ data }) => {
         if (active) {
-          setMe(m.data);
-          setItems(r.data.items);
-          setTotal(r.data.total);
+          setItems(data.items);
+          setTotal(data.total);
           setError("");
         }
       })
@@ -1171,6 +1166,7 @@ export default function TechnicianPortal({
     return () => clearInterval(timer);
   }, [selected]);
   const list = items || [];
+  const mainArea = area === "rates" ? "finance" : area;
   async function logout() {
     try {
       await api.post("/auth/logout", {});
@@ -1275,12 +1271,11 @@ export default function TechnicianPortal({
               : []),
             ["stock", "Meu estoque", Package],
             ["finance", "Meu financeiro", Wallet],
-            ["rates", "Meus valores", CircleDollarSign],
           ].map(([key, label, Icon]) => (
             <button
               key={key}
-              className={area === key ? "is-active" : ""}
-              aria-current={area === key ? "page" : undefined}
+              className={mainArea === key ? "is-active" : ""}
+              aria-current={mainArea === key ? "page" : undefined}
               aria-haspopup={key === "chat" ? "dialog" : undefined}
               onClick={() => {
                 if (key === "chat") {
@@ -1325,7 +1320,7 @@ export default function TechnicianPortal({
             }))}
             loading={loading}
             error={error}
-            name={supervision?.name || user.nome || me?.name}
+            name={supervision?.name || user.nome || user.login}
             onOpen={(id) => {
               setArea("services");
               setSelected(id);
@@ -1348,10 +1343,28 @@ export default function TechnicianPortal({
           />
         ) : area === "stock" ? (
           <Stock />
-        ) : area === "finance" ? (
-          <FinancePanel technical />
-        ) : area === "rates" ? (
-          <Rates />
+        ) : mainArea === "finance" ? (
+          <>
+            <nav className="portal-tabs" aria-label="Seções do financeiro">
+              <button
+                type="button"
+                className={area === "finance" ? "is-active" : ""}
+                aria-pressed={area === "finance"}
+                onClick={() => setArea("finance")}
+              >
+                Pagamentos
+              </button>
+              <button
+                type="button"
+                className={area === "rates" ? "is-active" : ""}
+                aria-pressed={area === "rates"}
+                onClick={() => setArea("rates")}
+              >
+                Meus valores
+              </button>
+            </nav>
+            {area === "finance" ? <FinancePanel technical /> : <Rates />}
+          </>
         ) : (
           <>
             <div className="portal-intro">
