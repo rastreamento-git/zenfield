@@ -1113,6 +1113,7 @@ export default function TechnicianPortal({
     [password, setPassword] = useState(false),
     [area, setArea] = useState("home"),
     [chatMode, setChatMode] = useState("closed"),
+    [chatNoticeRevision, setChatNoticeRevision] = useState(0),
     [criteria, setCriteria] = useState({
       q: "",
       vehicle: "",
@@ -1203,7 +1204,12 @@ export default function TechnicianPortal({
           <ThemeControl />
           <span>{supervision?.name || user.nome}</span>
           <NoticeBell
+            chatRevision={chatNoticeRevision}
             onOpen={(n) => {
+              if (n.target === "chat") {
+                if (!supervision) setChatMode("full");
+                return;
+              }
               if (n.detail.order_id) {
                 setArea("services");
                 setSelected(n.detail.order_id);
@@ -1502,7 +1508,16 @@ export default function TechnicianPortal({
         )}
       </main>
       <AppFooter product="ZenField" />
-      {!supervision && <Chat mode={chatMode} onModeChange={setChatMode} />}
+      {!supervision && (
+        <Chat
+          mode={chatMode}
+          onModeChange={setChatMode}
+          onNotice={(newMessage) => {
+            setChatNoticeRevision((n) => n + 1);
+            if (newMessage) notify("Nova mensagem da central.", "info");
+          }}
+        />
+      )}
       {password && (
         <FormModal
           title={supervision ? "Alterar minha senha" : "Alterar senha"}
