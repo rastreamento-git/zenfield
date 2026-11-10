@@ -4,9 +4,6 @@
   color: var(--ep-text);
   font-size: 22px;
 }
-.portal-app .portal-chat-exit {
-  display: none;
-}
 @media (max-width: 620px) {
   .portal-app .portal-areas {
     display: grid;
@@ -23,16 +20,6 @@
     font-size: 11px;
     text-align: center;
     white-space: normal;
-  }
-  .portal-app.portal-chat-mode .portal-areas {
-    display: none;
-  }
-  .portal-app.portal-chat-mode .portal-main {
-    padding-bottom: 24px;
-  }
-  .portal-app.portal-chat-mode .portal-chat-exit {
-    display: inline-flex;
-    margin-bottom: 12px;
   }
 }
 .portal-app .brand small {
@@ -451,6 +438,10 @@
   font-size: 14px;
 }
 @media (max-width: 760px) {
+  .portal-app {
+    /* Leave room for both rows of the fixed mobile navigation. */
+    --zen-chat-nav-offset: 150px;
+  }
   .portal-main {
     padding: 22px 18px 110px;
   }

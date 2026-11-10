@@ -1112,6 +1112,7 @@ export default function TechnicianPortal({
     [filter, setFilter] = useState("open"),
     [password, setPassword] = useState(false),
     [area, setArea] = useState("home"),
+    [chatMode, setChatMode] = useState("closed"),
     [criteria, setCriteria] = useState({
       q: "",
       vehicle: "",
@@ -1182,12 +1183,7 @@ export default function TechnicianPortal({
     );
   }
   return (
-    <div
-      className={
-        "inventory-app portal-app zen-shell zen-shell-field" +
-        (area === "chat" ? " portal-chat-mode" : "")
-      }
-    >
+    <div className="inventory-app portal-app zen-shell zen-shell-field">
       <a className="skip-link" href="#field-content">
         Ir para o conteúdo
       </a>
@@ -1279,7 +1275,12 @@ export default function TechnicianPortal({
               key={key}
               className={area === key ? "is-active" : ""}
               aria-current={area === key ? "page" : undefined}
+              aria-haspopup={key === "chat" ? "dialog" : undefined}
               onClick={() => {
+                if (key === "chat") {
+                  setChatMode("full");
+                  return;
+                }
                 setArea(key);
                 setSelected(null);
               }}
@@ -1339,17 +1340,6 @@ export default function TechnicianPortal({
               }
             }}
           />
-        ) : area === "chat" && !supervision ? (
-          <>
-            <button
-              type="button"
-              className="secondary-button portal-chat-exit"
-              onClick={() => setArea("home")}
-            >
-              <ArrowLeft size={17} /> Voltar ao início
-            </button>
-            <Chat />
-          </>
         ) : area === "stock" ? (
           <Stock />
         ) : area === "finance" ? (
@@ -1512,6 +1502,7 @@ export default function TechnicianPortal({
         )}
       </main>
       <AppFooter product="ZenField" />
+      {!supervision && <Chat mode={chatMode} onModeChange={setChatMode} />}
       {password && (
         <FormModal
           title={supervision ? "Alterar minha senha" : "Alterar senha"}
