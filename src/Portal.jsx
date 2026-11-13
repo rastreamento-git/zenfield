@@ -530,6 +530,17 @@ function Service({ id, onBack, onChanged, onOpenRelated }) {
             </p>
           </div>
         )}
+        {order.sticker_discount_opt_in && (
+          <div className="zc-notice">
+            <b>Aplicar 1 adesivo Perfurado · produto SGA 2371</b>
+            <p>
+              O cliente optou pelo desconto do adesivo. Você é o responsável
+              pela aplicação neste atendimento. Registre a aplicação nas
+              observações; a baixa será feita da sua carga após a confirmação da
+              central.
+            </p>
+          </div>
+        )}
         {order.tracker_waiver_authorized && (
           <div className="zc-notice">
             <b>Dispensa de rastreador autorizada</b>
