@@ -755,6 +755,15 @@
   flex-direction: column;
   background: var(--ep-canvas);
 }
+.inventory-app.portal-app {
+  height: auto;
+  min-height: 100dvh;
+  overflow: visible;
+}
+.portal-app > .portal-main {
+  min-width: 0;
+  flex-shrink: 0;
+}
 .portal-header {
   display: flex;
   justify-content: space-between;
@@ -1257,7 +1266,7 @@
 }
 .portal-capture-group {
   padding: 18px 0;
-  border-top: 1px solid var(--border-color, #dbe3ee);
+  border-top: 1px solid var(--ep-line);
 }
 .portal-capture-group h3 {
   margin: 0 0 6px;
@@ -1275,12 +1284,12 @@
   justify-content: center;
   padding: 20px;
   color: #2563eb;
-  background: #eff6ff;
+  background: var(--ep-primary-soft);
 }
 .portal-full-order {
   grid-column: 1 / -1;
   padding: 16px 0;
-  border-top: 1px solid var(--border-color, #dbe3ee);
+  border-top: 1px solid var(--ep-line);
 }
 .portal-full-order summary {
   cursor: pointer;
@@ -1311,8 +1320,8 @@
   place-items: center;
   width: 28px;
   height: 28px;
-  background: #dbeafe;
-  color: #1d4ed8;
+  background: var(--ep-primary-soft);
+  color: var(--ep-primary-ink);
 }
 .portal-service .error-banner {
   display: flex;
@@ -1351,4 +1360,239 @@
   .portal-progress {
     gap: 10px 14px;
   }
+}
+
+/* A central user keeps their identity while operating a selected technician. */
+.portal-supervision {
+  width: min(1080px, calc(100% - 32px));
+  margin: 18px auto 0;
+  padding: 18px 20px;
+  border: 1px solid var(--ep-line);
+  border-left: 4px solid #3b6edb;
+  border-radius: 12px;
+  background: var(--ep-primary-soft);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+}
+.portal-supervision small {
+  display: block;
+  color: var(--ep-primary-ink);
+  font-size: 9px;
+  font-weight: 750;
+  letter-spacing: 1px;
+  margin-bottom: 5px;
+}
+.portal-supervision strong {
+  display: block;
+  color: var(--ep-text);
+  font-size: 15px;
+}
+.portal-supervision p {
+  color: var(--ep-muted);
+  font-size: 11px;
+  margin: 6px 0 0;
+  line-height: 1.6;
+}
+.portal-supervision-actions {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.field-selector-app {
+  background: var(--ep-canvas);
+}
+.field-selector-main {
+  width: min(1060px, 100%);
+  padding: 30px 24px 60px;
+  margin: 0 auto;
+  flex: 1;
+}
+.field-selector-intro {
+  margin: 36px 0 25px;
+}
+.field-selector-intro h1 {
+  margin: 8px 0 12px;
+  font-size: clamp(25px, 3.4vw, 34px);
+  letter-spacing: -1px;
+}
+.field-selector-intro > p:last-child {
+  font-size: 13px;
+  color: var(--ep-muted);
+  line-height: 1.7;
+}
+.field-selector-search {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: 530px;
+  border: 1px solid var(--ep-line);
+  background: var(--ep-surface);
+  padding: 0 16px;
+  height: 49px;
+  border-radius: 10px;
+  color: var(--ep-muted);
+  margin-bottom: 26px;
+}
+.field-selector-search input {
+  border: 0;
+  background: transparent;
+  width: 100%;
+  outline: none;
+  padding: 12px 0;
+  font-size: 13px;
+}
+.field-selector-search:focus-within {
+  outline: 2px solid #376ed6;
+  outline-offset: 2px;
+}
+.field-selector-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 15px;
+}
+.field-technician-card {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  padding: 23px;
+  text-align: left;
+  cursor: pointer;
+  border: 1px solid var(--ep-line);
+  transition:
+    border-color 0.15s,
+    box-shadow 0.15s;
+}
+.field-technician-card:hover {
+  border-color: #9cb9ec;
+  box-shadow: 0 8px 20px #264a8010;
+}
+.field-technician-card:focus-visible {
+  outline: 3px solid #376ed6;
+  outline-offset: 3px;
+}
+.field-technician-card > span:nth-child(2) {
+  flex: 1;
+  min-width: 0;
+}
+.field-technician-card strong,
+.field-technician-card small {
+  display: block;
+}
+.field-technician-card strong {
+  color: var(--ep-text);
+  font-size: 14px;
+  overflow-wrap: anywhere;
+}
+.field-technician-card small {
+  font-size: 11px;
+  color: var(--ep-muted);
+  margin-top: 7px;
+}
+.field-technician-avatar {
+  width: 46px;
+  height: 46px;
+  display: grid;
+  place-items: center;
+  color: var(--ep-primary-ink);
+  background: var(--ep-primary-soft);
+  border-radius: 13px;
+  flex-shrink: 0;
+}
+@media (max-width: 650px) {
+  .field-selector-grid {
+    grid-template-columns: 1fr;
+  }
+  .portal-supervision {
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 15px;
+  }
+  .portal-supervision-actions {
+    width: 100%;
+    flex-wrap: wrap;
+  }
+  .field-selector-main {
+    padding: 24px 18px 45px;
+  }
+}
+
+.portal-upload-queue {
+  margin: 14px 0;
+  border: 1px solid var(--ep-line);
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--ep-subtle);
+}
+.portal-upload-queue ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.portal-upload-queue li {
+  padding: 12px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  border-bottom: 1px solid var(--ep-line);
+  font-size: 12px;
+}
+.portal-upload-queue li:last-child {
+  border: 0;
+}
+.portal-upload-queue li > div {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  gap: 5px;
+  overflow-wrap: anywhere;
+}
+.portal-upload-queue span {
+  color: var(--ep-muted);
+  line-height: 1.5;
+}
+.portal-upload-queue .upload-error {
+  background: var(--ep-red-soft);
+}
+.portal-upload-queue .upload-error span {
+  color: var(--ep-red-ink);
+}
+.portal-upload-queue .upload-success span {
+  color: var(--ep-green-ink);
+}
+@media (max-width: 600px) {
+  .portal-upload-queue li {
+    align-items: flex-start;
+    flex-wrap: wrap;
+  }
+}
+
+.portal-equipment-plan {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 210px), 1fr));
+  gap: 12px;
+  margin: 18px 0;
+}
+.portal-equipment-requirement {
+  padding: 16px;
+  border: 1px solid var(--ep-line);
+  border-radius: 12px;
+  background: var(--ep-subtle);
+}
+.portal-equipment-requirement strong {
+  color: var(--ep-text);
+  font-size: 16px;
+}
+.portal-equipment-requirement p,
+.portal-equipment-requirement span {
+  color: var(--ep-muted);
+  font-size: 13px;
+}
+.portal-equipment-requirement.is-complete {
+  border-color: var(--ep-green-ink);
+  background: var(--ep-green-soft);
+}
+.portal-equipment-requirement.is-complete span {
+  color: var(--ep-green-ink);
 }
