@@ -30,7 +30,6 @@ const services = [
   "Retirada",
   "Reinstalação",
   "Improdutiva",
-  "Visita",
 ];
 const states = {
   legacy_unverified: "Histórico a conferir",
@@ -209,7 +208,7 @@ function PriceFields({ value, onChange }) {
       {services.map((s) => (
         <Field
           key={s}
-          label={s + " (R$)"}
+          label={(s==="Improdutiva"?"Visita improdutiva":s) + " (R$)"}
           type="number"
           min="0"
           step="0.01"
@@ -830,12 +829,14 @@ export function Rates() {
                   : "Versão anterior"}
             </h2>
             <p>Desde {r.effective_on}</p>
-            {Object.entries(r.prices).map(([s, n]) => (
+            {Object.entries(r.prices).filter(([s])=>s!=="Visita").map(([s, n]) => (
               <div className="eco-row" key={s}>
-                <span>{s}</span>
+                <span>{s==="Improdutiva"?"Visita improdutiva":s}</span>
                 <strong>{brl(n)}</strong>
               </div>
             ))}
+            <div className="eco-row"><span>Valor por km</span><strong>{brl(r.travel_km_cents)}</strong></div>
+            <small>{r.travel_policy?.mode==="none"?"Não cobra por km":r.travel_policy?.mode==="excess"?"Até "+r.travel_policy.included_meters/1000+" km inclusos; cobra somente o excedente":r.travel_policy?.mode==="full"?"Até "+r.travel_policy.included_meters/1000+" km inclusos; acima disso, cobra todo o trajeto":"Somente km extras autorizados pela central"}</small>
           </article>
         ))}
       </div>
