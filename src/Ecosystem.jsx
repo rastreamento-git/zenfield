@@ -11,7 +11,7 @@ import {
 } from "lucide-react";
 import { api, errorMessage } from "@zenfield/ui/lib/api";
 import "./ecosystem.css";
-import DailyRoute from "./DailyRoute";
+import { Route } from "lucide-react";
 const brl = (n) =>
   ((n || 0) / 100).toLocaleString("pt-BR", {
     style: "currency",
@@ -1749,7 +1749,11 @@ export function Home({ items, onOpen, onNavigate, name, loading, error }) {
           <Loader state={stockState} />
         </button>
       </div>
-      <DailyRoute onOpen={onOpen}/>
+      <button type="button" className="dashboard-panel eco-home-service eco-link field-route-shortcut" onClick={()=>onNavigate("route")}>
+        <Route size={22} aria-hidden="true"/>
+        <div><strong>Meu roteiro</strong><p>Consulte a sequência de menor distância dos seus atendimentos.</p></div>
+        <ArrowRight size={18}/>
+      </button>
       <h2>Próximos serviços</h2>
       {loading && <p role="status">Carregando seus atendimentos…</p>}
       {!loading && !error && !open.length && (

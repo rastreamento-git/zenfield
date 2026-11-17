@@ -606,3 +606,5 @@
 .portal-main .eco-home-service p{margin:3px 0}
 .portal-main .eco-home-resources{gap:8px}
 @media(max-width:620px){.portal-main{padding:12px 12px 30px}.portal-header{padding-block:10px}.field-route-card{padding:10px}.field-route-metrics>div{padding:6px}.field-route-metrics strong{font-size:15px}.field-route-heading>button{width:100%}}
+
+.field-route-shortcut{display:flex;align-items:center;gap:10px;text-align:left;min-height:0}.field-route-shortcut>div{flex:1;min-width:0}.field-route-shortcut p{margin:2px 0;font-size:12px}.field-route-shortcut>svg{flex-shrink:0}.portal-main>.field-route-card{margin-top:10px}
