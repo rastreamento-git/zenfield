@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 import { api, errorMessage } from "@zenfield/ui/lib/api";
 import "./ecosystem.css";
+import DailyRoute from "./DailyRoute";
 const brl = (n) =>
   ((n || 0) / 100).toLocaleString("pt-BR", {
     style: "currency",
@@ -1747,6 +1748,7 @@ export function Home({ items, onOpen, onNavigate, name, loading, error }) {
           <Loader state={stockState} />
         </button>
       </div>
+      <DailyRoute onOpen={onOpen}/>
       <h2>Próximos serviços</h2>
       {loading && <p role="status">Carregando seus atendimentos…</p>}
       {!loading && !error && !open.length && (

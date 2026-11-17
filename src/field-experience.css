@@ -576,3 +576,33 @@
     padding-bottom: 0;
   }
 }
+
+/* Roteiro diário: foco na próxima ação, sem cartões altos ou espaços vazios. */
+.field-route-card{display:grid;gap:9px;padding:12px;min-width:0}
+.field-route-heading{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.field-route-heading h2{display:flex;align-items:center;gap:7px;font-size:16px;margin:0}
+.field-route-heading p{font-size:12px;color:var(--ep-muted);margin:3px 0 0}
+.field-route-heading button,.field-route-tabs button{display:inline-flex;align-items:center;justify-content:center;gap:6px;min-height:34px;font-size:12px}
+.field-route-controls{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.field-route-controls label{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--ep-text)}
+.field-route-controls input[type=date]{min-height:34px;border:1px solid var(--ep-line);border-radius:7px;padding:5px 8px;background:var(--ep-surface);color:var(--ep-text)}
+.field-route-controls input[type=checkbox]{accent-color:var(--ep-primary)}
+.field-route-metrics{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px}
+.field-route-metrics>div{display:grid;gap:3px;border:1px solid var(--ep-line);border-radius:7px;padding:8px;min-width:0}
+.field-route-metrics strong{font-size:17px;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.field-route-card small,.field-route-note{font-size:11px;color:var(--ep-muted);line-height:1.4}
+.field-route-note{padding:8px;border:1px solid var(--ep-line);border-radius:7px;margin:0}
+.field-route-tabs{display:flex;flex-wrap:wrap;gap:6px}
+.field-route-stops{list-style:none;margin:0;padding:0;display:grid;gap:0}
+.field-route-stops li{display:flex;align-items:center;gap:8px;padding:8px 0;border-top:1px solid var(--ep-line)}
+.field-route-stop-number{display:grid;place-items:center;width:24px;height:24px;flex:0 0 24px;border-radius:50%;background:var(--ep-primary-soft);color:var(--ep-text);font-size:12px;font-weight:600}
+.field-route-stops li>div,.field-route-stop>div{display:grid;gap:2px;min-width:0}
+.field-route-stop{display:flex;align-items:center;gap:8px;flex:1;min-width:0;text-align:left;border:0;background:transparent;color:var(--ep-text);padding:0;cursor:pointer}
+.field-route-stop>div:first-child{flex:1;overflow-wrap:anywhere}
+.field-route-stop strong,.field-route-stops li>div strong{font-size:12px}
+.field-route-footnote{display:block}
+.portal-main .eco-section{gap:10px}
+.portal-main .eco-home-service{padding:10px 12px;gap:8px}
+.portal-main .eco-home-service p{margin:3px 0}
+.portal-main .eco-home-resources{gap:8px}
+@media(max-width:620px){.portal-main{padding:12px 12px 30px}.portal-header{padding-block:10px}.field-route-card{padding:10px}.field-route-metrics>div{padding:6px}.field-route-metrics strong{font-size:15px}.field-route-heading>button{width:100%}}
