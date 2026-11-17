@@ -1,4 +1,5 @@
 import { appearanceUrl } from "./ui/lib/appearance";
+import DailyRoute from "./DailyRoute";
 import ThemeControl from "./ui/components/ThemeControl";
 import ZenMark from "./ui/components/ZenMark";
 import ProfileButton from "./ui/components/ProfileButton";
@@ -27,6 +28,7 @@ import {
   LogOut,
   MessageCircle,
   MapPin,
+  Route,
   RefreshCw,
   Send,
   Trash2,
@@ -1277,6 +1279,7 @@ export default function TechnicianPortal({
           {[
             ["home", "Início", Activity],
             ["services", "Meus serviços", ClipboardList],
+            ["route", "Meu roteiro", Route],
             ...(!supervision
               ? [["chat", "Chat com a central", MessageCircle]]
               : []),
@@ -1352,6 +1355,8 @@ export default function TechnicianPortal({
               }
             }}
           />
+        ) : area === "route" ? (
+          <DailyRoute key={supervision?.id||user.id} onOpen={(id)=>setSelected(id)} />
         ) : area === "stock" ? (
           <Stock />
         ) : mainArea === "finance" ? (
