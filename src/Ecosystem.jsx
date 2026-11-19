@@ -1723,37 +1723,12 @@ export function Home({ items, onOpen, onNavigate, name, loading, error }) {
           </button>
         ))}
       </div>
-      <Loader state={state} />
-      <div className="eco-home-resources">
-        {state.data && (
-          <button
-            className="dashboard-panel eco-card eco-link"
-            onClick={() => onNavigate("finance")}
-          >
-            <Wallet />
-            <h2>
-              {brl(state.data.estimated_cents + state.data.confirmed_cents)}
-            </h2>
-            <p>
-              Previsão de serviços ainda sem fechamento · consultar financeiro
-            </p>
-          </button>
-        )}
-        <button
-          className="dashboard-panel eco-card eco-link"
-          onClick={() => onNavigate("stock")}
-        >
-          <Package size={24} />
-          <h2>{stockState.data?.items.length ?? "—"}</h2>
-          <p>Equipamentos em carga · consultar meu estoque</p>
-          <Loader state={stockState} />
-        </button>
-      </div>
       <button type="button" className="dashboard-panel eco-home-service eco-link field-route-shortcut" onClick={()=>onNavigate("route")}>
         <Route size={22} aria-hidden="true"/>
         <div><strong>Meu roteiro</strong><p>Consulte a sequência de menor distância dos seus atendimentos.</p></div>
         <ArrowRight size={18}/>
       </button>
+      <div className="field-home-appointments">
       <h2>Próximos serviços</h2>
       {loading && <p role="status">Carregando seus atendimentos…</p>}
       {!loading && !error && !open.length && (
@@ -1792,6 +1767,34 @@ export function Home({ items, onOpen, onNavigate, name, loading, error }) {
             <ArrowRight size={20} />
           </button>
         ))}
+      </div>
+      <h2>Recursos de trabalho</h2>
+      <Loader state={state} />
+      <div className="eco-home-resources">
+        {state.data && (
+          <button
+            className="dashboard-panel eco-card eco-link"
+            onClick={() => onNavigate("finance")}
+          >
+            <Wallet />
+            <h2>
+              {brl(state.data.estimated_cents + state.data.confirmed_cents)}
+            </h2>
+            <p>
+              Previsão de serviços ainda sem fechamento · consultar financeiro
+            </p>
+          </button>
+        )}
+        <button
+          className="dashboard-panel eco-card eco-link"
+          onClick={() => onNavigate("stock")}
+        >
+          <Package size={24} />
+          <h2>{stockState.data?.items.length ?? "—"}</h2>
+          <p>Equipamentos em carga · consultar meu estoque</p>
+          <Loader state={stockState} />
+        </button>
+      </div>
     </section>
   );
 }
