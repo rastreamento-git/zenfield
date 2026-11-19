@@ -579,3 +579,71 @@ body {
     font-size: 16px;
   }
 }
+
+
+/* Zen Workspace · pré-beta. A marca institucional permanece intacta. */
+.zen-shell {
+  --workspace-navy: #10264b;
+  --workspace-hero: linear-gradient(112deg,#10264b 0%,#164786 65%,#195ccd 100%);
+  --workspace-radius: 14px;
+}
+.zen-shell .app-sidebar {
+  --ep-sidebar: #10264b;
+  --ep-text: #f4f8ff;
+  --ep-muted: #b9cce6;
+  --ep-line: #ffffff22;
+  --ep-primary-ink: #b4d6ff;
+  --ep-primary-soft: #ffffff12;
+  --zen-app-accent: #91c6ff;
+  background: #10264b;
+  color: #e4efff;
+  border-color: #ffffff18;
+}
+.zen-shell .app-sidebar :is(.brand strong,.sidebar-footer strong) { color:#f4f8ff; }
+.zen-shell .app-sidebar :is(.brand small,.nav-group > p,.sidebar-footer small) { color:#bed0e8; }
+.zen-shell .app-sidebar .brand { min-height:80px; padding-block:16px; }
+.zen-shell .app-sidebar .nav-item { color:#d7e4f6; min-height:42px; margin-bottom:3px; border-radius:8px; }
+.zen-shell .app-sidebar .nav-item:hover { color:#fff; background:#ffffff12; }
+.zen-shell .app-sidebar .nav-item.is-active { color:#fff; background:#2462b6; box-shadow:inset 3px 0 #a5d3ff; border-color:transparent; }
+.zen-shell .app-sidebar .nav-item.is-active > svg:first-child { color:#fff; }
+.zen-shell .app-sidebar .icon-button { color:#d7e4f6; }
+.zen-shell .app-sidebar .sidebar-footer { border-top-color:#ffffff22; }
+.zen-shell .app-sidebar .sidebar-nav { padding-inline:12px; }
+.zen-shell .app-sidebar .nav-group + .nav-group { margin-top:17px; }
+.zen-shell .topbar { background:var(--ep-surface); min-height:76px; padding-block:12px; }
+.zen-shell .app-content { background:var(--ep-canvas); }
+.zen-shell .sync-toolbar { border-bottom:1px solid var(--ep-line); padding-bottom:10px; }
+.zen-shell :is(.dashboard-panel,.stat-card,.stock-overview,.portal-order,.portal-step,.portal-service-summary,.eco-card) {
+  border-radius:var(--workspace-radius); box-shadow:0 2px 6px #10264b08;
+}
+.zen-shell .stat-card { padding:16px 18px; }
+.zen-shell .stat-card::before { inset:0 auto 0 0; width:3px; height:auto; border-radius:14px 0 0 14px; }
+.zen-shell .stat-value { font-size:clamp(26px,2.6vw,38px); }
+.zen-shell :is(.zc-table,.trace-table) th { background:var(--ep-subtle); color:var(--ep-muted); }
+.zen-shell :is(.zc-table,.trace-table) tbody tr:hover { background:var(--ep-primary-soft); }
+.zen-shell :is(.primary-button,.secondary-button), .tracking-app :is(.primary-button,.secondary-button) { border-radius:9px; }
+.zen-shell :is(.dashboard-intro,.eco-home-hero) { min-width:0; }
+@media screen and (max-width:760px) {
+  .zen-shell .topbar { min-height:64px; padding:12px; }
+  .zen-shell .app-content { padding:12px; }
+  .zen-shell .stat-card { padding:12px; }
+}
+
+.zen-shell-field .portal-header { background:#10264b; color:#f4f8ff; border-color:#ffffff20; }
+.zen-shell-field .portal-header .brand strong,.zen-shell-field .portal-header-user > span,.zen-shell-field .portal-header .icon-button { color:#f4f8ff; }
+.zen-shell-field .portal-header .brand small { color:#c3d6ef; }
+.zen-shell-field .portal-header .brand strong > span { color:#a5d3ff; }
+.zen-shell-field .eco-home-hero { background:var(--workspace-hero); color:#fff; padding:24px; border:0; border-radius:16px; }
+.zen-shell-field .eco-home-hero :is(h1,p,.eyebrow) { color:#fff; }
+.zen-shell-field .eco-home-hero p { color:#d9e8ff; }
+.zen-shell-field .eco-home-hero .primary-button { background:#fff; color:#144cab; }
+.zen-shell-field .eco-home-stats .eco-card { text-align:left; border-top:3px solid var(--ep-primary); }
+.zen-shell-field .field-route-shortcut { border-left:4px solid var(--ep-primary); background:var(--ep-primary-soft); }
+.zen-shell-field .field-home-appointments { display:grid; gap:8px; min-width:0; }
+.zen-shell-field .field-home-appointments h2 { margin:8px 0 0; font-size:18px; }
+.zen-shell-field .field-home-appointments .eco-home-service { border-left:3px solid var(--ep-primary); }
+@media screen and (max-width:760px) {
+  .zen-shell-field .eco-home-hero { padding:17px; }
+  .zen-shell-field .eco-home-hero .primary-button { width:100%; }
+  .zen-shell-field .eco-home-stats .eco-card p { font-size:11px; }
+}
