@@ -1,4 +1,4 @@
-export default function AppFooter({ product = "ZenField", version = "1.0.0" }) {
+export default function AppFooter({ product = "ZenField", version = "1.1.0" }) {
   return (
     <footer className="page-footer">
       <span className="footer-product">
