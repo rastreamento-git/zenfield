@@ -1,6 +1,7 @@
 {
   "git": {
     "deploymentEnabled": {
+      "fix/auditoria-zenfield": false,
       "feat/ecossistema-homologacao": true
     }
   },
