@@ -1,65 +1,26 @@
-# ZenField
+# ZenField · Portal do técnico
 
-Portal dos técnicos — versão 1.0.0. Projeto independente do repositório ZenControl, com dependências, login, sessão e publicação próprios. Não usa workspaces nem importa arquivos de outro projeto.
+Aplicação do ecossistema **ZenTracking** para consultar serviços, registrar a execução em campo, enviar evidências e acompanhar equipamentos e valores do técnico.
 
-O técnico consulta a OS, envia fotos do serviço e da vistoria, fotografa as etiquetas dos rastreadores/TAGs, anexa o checklist assinado e acompanha a confirmação da central. A leitura dos códigos ocorre no backend do ZenControl, que consulta o Estoque Pro. A aprovação e o fechamento financeiro continuam no ZenControl.
+Esta revisão parte da branch `feat/ecossistema-homologacao`, versão 1.1, e requer a API ZenControl 6.4 ou superior. O projeto possui dependências, compilação e hospedagem próprias.
 
-## Antes de publicar
+## Como funciona
 
-O backend precisa conter a atualização 6.3 do portal: migração 004, leitura de etiquetas, checklist PDF, autenticação por perfil e `TECHNICIAN_PORTAL_URL`. O backend 6.2 ainda não oferece todo esse fluxo. O pacote de entrega inclui um patch separado para atualizar o ZenControl; ele não faz parte do repositório ZenField.
+- Técnicos entram pelo ZenTracking e seguem diretamente ao ZenField.
+- Administradores e operadores selecionam o ambiente de um técnico. As ações permanecem identificadas pelo usuário real da central.
+- O atendimento reúne os equipamentos previstos em um único registro, inclusive quando existem unidades adicionais.
+- Etiquetas de rastreador e TAG são enviadas em múltiplas fotos. A API identifica códigos de barras e QR Code e confere os equipamentos na carga correta.
+- Etiquetas ilegíveis ou incompatíveis geram aviso. Fotos gerais são opcionais, sem quantidade mínima.
+- Checklist assinado, data executada e observações do técnico completam o envio. Rascunhos podem ser salvos antes disso.
+- A central confere as fotos no ZenControl. Nas instalações, a conclusão depende também do recibo do Estoque Pro.
 
-## Repositório próprio
+Há consulta da carga, solicitações de estoque, tarifas, pedidos de reajuste e demonstrativos financeiros. Despesas extras exigem vínculo com a OS principal, valor, descrição e foto do comprovante, com aprovação da central. A taxa de deslocamento é definida pela operação e aparece para consulta.
 
-Crie um repositório vazio chamado `zenfield` na sua conta do GitHub. Envie **o conteúdo desta pasta**, com `package.json` na raiz. Não envie `node_modules`, `dist` ou `.env`. O arquivo `.env.example` contém somente configurações públicas de exemplo.
+A interface oferece modos claro, escuro e automático e adaptação ao celular.
 
-Para uma cópia local do repositório vazio, copie os arquivos e execute:
+## Desenvolvimento
 
-```bash
-git add .
-git commit -m "feat: ZenField portal dos técnicos"
-git push -u origin main
-```
-
-## Hospedagem no Render
-
-Crie **New → Static Site** e selecione o repositório `zenfield`.
-
-| Campo             | Valor                                                              |
-| ----------------- | ------------------------------------------------------------------ |
-| Name              | `zenfield` ou outro nome disponível                                |
-| Branch            | `main`                                                             |
-| Root Directory    | Vazio                                                              |
-| Build Command     | `npm ci --include=dev && npm run build`                            |
-| Publish Directory | `dist`                                                             |
-| `NODE_VERSION`    | `24`                                                               |
-| `VITE_API_URL`    | `https://zencontrol.onrender.com` (use o endereço real do backend) |
-
-Em **Redirects/Rewrites**, adicione `/*` → `/index.html`, ação **Rewrite**. Para uma nova instalação via Blueprint, `render.yaml` contém apenas o site ZenField.
-
-O build exige `VITE_API_URL` e recusa URL sem HTTPS, exceto localhost para desenvolvimento. Essa variável é pública; chaves do Supabase, conexão Aiven e segredos de integração ficam exclusivamente no backend.
-
-Depois que o Render gerar o endereço próprio do ZenField, configure no **Web Service do ZenControl**:
-
-```dotenv
-TECHNICIAN_PORTAL_URL=https://ENDERECO-REAL-DO-ZENFIELD.onrender.com
-```
-
-Salve e implante o backend. Essa configuração autoriza a origem do ZenField na API e atualiza os links dos PDFs. Preserve os demais valores de `CORS_ORIGINS`. Se mudar `VITE_API_URL`, reconstrua e publique o Static Site.
-
-## Configuração operacional na central
-
-1. Cadastre o técnico e vincule-o ao cadastro do Estoque Pro.
-2. Crie uma conta individual com perfil Técnico e associe o cadastro.
-3. Distribua os equipamentos na carga correta e mantenha categoria `RASTREADOR` ou `TAG`.
-4. Confira o bucket Supabase privado, permitindo JPEG e PDF quando houver restrição de MIME.
-5. Habilite a integração com o Estoque Pro e `ZEN_RUN_WORKER=true` na API.
-6. Homologue uma OS completa antes de distribuir o acesso ao ZenField.
-
-O envio recebe confirmação pendente. A central confere fotos, checklist e assinatura; a OS só entra no fechamento após a conclusão. Nas instalações, também é necessário o recibo do Estoque Pro. O ZenField não executa pagamento automático.
-
-## Desenvolvimento e validação
-
-Node.js 24:
+Requer Node.js 24:
 
 ```bash
 npm ci --include=dev
@@ -67,12 +28,27 @@ npm run check
 npm run dev
 ```
 
-O portal abre na porta 5174. Para usar a API local, configure `VITE_API_URL=http://127.0.0.1:3000` no `.env` e `TECHNICIAN_PORTAL_URL=http://127.0.0.1:5174` no backend.
+Configure `VITE_API_URL` com a URL do backend. Em desenvolvimento local, por exemplo, `http://127.0.0.1:3000`. O Vite abre na porta 5174.
 
-```bash
-VITE_API_URL=https://zencontrol.onrender.com npm run build
-```
+Para testar as três aplicações juntas, siga [Homologação do ecossistema](https://github.com/rastreamento-git/zencontrol/blob/feat/ecossistema-homologacao/HOMOLOGACAO.md).
 
-No PowerShell, defina `$env:VITE_API_URL='https://zencontrol.onrender.com'` antes de executar `npm run build`.
+## Publicação
 
-O workflow incluído verifica as fontes e o build do ZenField sem baixar o ZenControl. Os testes do backend ficam no repositório da central. PDFs assinados são conferidos pelo operador; etiquetas precisam mostrar um código de barras ou QR Code legível.
+Na Vercel, use a raiz do repositório, instalação `npm ci --include=dev`, compilação `npm run build`, saída `dist` e Node.js 24. Configure `VITE_API_URL` com a URL HTTPS da API antes de compilar. O arquivo `vercel.json` contém o redirecionamento das rotas para a aplicação.
+
+No backend ZenControl, configure `TECHNICIAN_PORTAL_URL` com a origem real do ZenField e preserve as demais origens autorizadas. Alterações em `VITE_API_URL` exigem nova compilação. Variáveis `VITE_*` são públicas e não devem conter senhas ou segredos.
+
+A hospedagem alternativa no Render continua descrita em `render.yaml`. A publicação de produção depende do ambiente e do aceite operacional.
+
+## Organização
+
+| Caminho | Responsabilidade |
+| --- | --- |
+| `src/FieldEntry.jsx` | Seleção do ambiente pela central |
+| `src/Portal.jsx` | Serviços, fotos, checklist e execução |
+| `src/Ecosystem.jsx` | Resumo, estoque, valores e financeiro |
+| `src/ui` | Componentes, sessão, tema e utilitários próprios |
+
+As regras de autorização, leitura de etiquetas e remuneração são verificadas pelo backend. Reagendamentos aguardam confirmação da nova data. Somente a central autoriza dispensa de rastreador.
+
+Desenvolvido por Victor Rodrigues.
