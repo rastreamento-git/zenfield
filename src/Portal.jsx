@@ -125,7 +125,7 @@ async function uploadData(file, checklist) {
   }
   return compressedImage(file);
 }
-function Service({ id, onBack, onChanged, onOpenRelated }) {
+function Service({ id, onBack, onChanged, onOpenRelated, leaveGuard }) {
   const [data, setData] = useState(null),
     [error, setError] = useState(""),
     [busy, setBusy] = useState(false),
@@ -145,6 +145,7 @@ function Service({ id, onBack, onChanged, onOpenRelated }) {
     [queues, setQueues] = useState({});
   const uploading = useRef(false);
   const loadedBatch = useRef(null);
+  const defaultExecutionDate = useRef(executedOn);
   async function reload() {
     const { data: next } = await api.get(
       "/technician/orders/" + encodeURIComponent(id),
@@ -197,6 +198,26 @@ function Service({ id, onBack, onChanged, onOpenRelated }) {
       setUploadStatus("");
     }
   }
+  const storedDraft = data?.submissions.find((entry) => entry.state === "draft");
+  const dirty = Boolean(storedDraft && (
+    notes !== (storedDraft.notes || "") ||
+    executedOn !== (storedDraft.executed_on || data.order.executed_on || defaultExecutionDate.current) ||
+    signed !== Boolean(storedDraft.checklist_signed) ||
+    Object.values(queues).some((queue) => queue.some((file) => file.status === "error"))
+  ));
+  useEffect(() => {
+    leaveGuard.current = { dirty, busy };
+    return () => { leaveGuard.current = null; };
+  }, [dirty, busy, leaveGuard]);
+  useEffect(() => {
+    if (!dirty && !busy) return;
+    function blockUnload(event) {
+      event.preventDefault();
+      event.returnValue = "";
+    }
+    window.addEventListener("beforeunload", blockUnload);
+    return () => window.removeEventListener("beforeunload", blockUnload);
+  }, [dirty, busy]);
   if (!data)
     return (
       <>
@@ -1180,7 +1201,16 @@ export default function TechnicianPortal({
   }, [selected]);
   const list = items || [];
   const mainArea = area === "rates" ? "finance" : area;
+  const leaveGuard = useRef(null);
+  async function canLeaveService() {
+    if (leaveGuard.current?.busy) return false;
+    return !leaveGuard.current?.dirty || await confirmAction(
+      "As alterações ainda não foram salvas. Deseja sair do atendimento?",
+      { title: "Sair do atendimento" },
+    );
+  }
   async function logout() {
+    if (!(await canLeaveService())) return;
     try {
       await api.post("/auth/logout", {});
     } catch (e) {
@@ -1214,11 +1244,12 @@ export default function TechnicianPortal({
           <span>{supervision?.name || user.nome}</span>
           <NoticeBell
             chatRevision={chatNoticeRevision}
-            onOpen={(n) => {
+            onOpen={async (n) => {
               if (n.target === "chat") {
                 if (!supervision) setChatMode("full");
                 return;
               }
+              if (!(await canLeaveService())) return;
               if (n.detail.order_id) {
                 setArea("services");
                 setSelected(n.detail.order_id);
@@ -1255,7 +1286,7 @@ export default function TechnicianPortal({
             <button
               type="button"
               className="secondary-button"
-              onClick={onChangeTechnician}
+              onClick={async () => { if (await canLeaveService()) onChangeTechnician(); }}
             >
               Trocar técnico
             </button>
@@ -1291,11 +1322,12 @@ export default function TechnicianPortal({
               className={mainArea === key ? "is-active" : ""}
               aria-current={mainArea === key ? "page" : undefined}
               aria-haspopup={key === "chat" ? "dialog" : undefined}
-              onClick={() => {
+              onClick={async () => {
                 if (key === "chat") {
                   setChatMode("full");
                   return;
                 }
+                if (!(await canLeaveService())) return;
                 setArea(key);
                 setSelected(null);
               }}
@@ -1322,9 +1354,14 @@ export default function TechnicianPortal({
           <Service
             key={selected}
             id={selected}
-            onBack={() => setSelected(null)}
+            leaveGuard={leaveGuard}
+            onBack={async () => {
+              if (await canLeaveService()) setSelected(null);
+            }}
             onChanged={() => setRevision((r) => r + 1)}
-            onOpenRelated={setSelected}
+            onOpenRelated={async (nextId) => {
+              if (await canLeaveService()) setSelected(nextId);
+            }}
           />
         ) : area === "home" ? (
           <Home
